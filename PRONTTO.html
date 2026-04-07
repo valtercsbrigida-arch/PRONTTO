@@ -1,0 +1,2644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRONTTO - Prontuário Digital de Terapia Ocupacional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap');
+        
+        :root {
+            --primary: #1e40af;
+        }
+        
+        * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        .tailwind-ready {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .logo-font {
+            font-family: 'Playfair Display', sans-serif;
+        }
+
+        .sidebar-link {
+            position: relative;
+        }
+        
+        .sidebar-link.active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background-color: #8b5cf6;
+        }
+
+        .prontuario-card {
+            box-shadow: 0 10px 15px -3px rgb(139 92 246);
+        }
+
+        .scale-result {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="tailwind-ready bg-blue-50 text-blue-950">
+    <!-- HEADER -->
+    <header class="bg-white border-b border-blue-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-lg md:text-2xl shadow-inner">
+                    🧬
+                </div>
+                <h1 class="logo-font text-2xl md:text-3xl font-bold tracking-tighter text-blue-700">PRONTTO</h1>
+                <span class="hidden sm:block text-xs font-medium bg-blue-100 text-blue-700 px-3 py-1 rounded-3xl">Terapia Ocupacional • Gerontologia</span>
+            </div>
+            
+            <div class="flex items-center gap-x-6">
+                <!-- Demo: Paciente selecionado rápido -->
+                <div onclick="quickOpenProntuario()" class="flex items-center gap-x-2 bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-3xl cursor-pointer">
+                    <i class="fa-solid fa-user-circle text-blue-600 text-xl"></i>
+                    <div>
+                        <p class="text-sm font-semibold" id="header-patient-name">Maria Silva</p>
+                        <p class="text-xs text-blue-600">76 anos • Alzheimer atípica</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-x-2">
+                    <div class="text-right">
+                        <p class="font-medium text-sm">Jackline Pinheiro</p>
+                        <p class="text-xs text-blue-600">Terapeuta Ocupacional • CRETO 21402TO</p>
+                    </div>
+                    <div class="w-9 h-9 bg-blue-200 rounded-2xl flex items-center justify-center text-blue-700">
+                        👩‍⚕️
+                    </div>
+                </div>
+                
+                <button onclick="logoutDemo()" 
+                        class="flex items-center justify-center w-9 h-9 hover:bg-blue-100 rounded-2xl text-blue-700">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Submenu -->
+        <div class="max-w-7xl mx-auto px-4 md:px-6 bg-blue-100 border-t border-blue-200 py-2 flex items-center gap-x-4 md:gap-x-8 text-sm font-medium overflow-x-auto">
+            <a onclick="navigateTo('dashboard')" class="cursor-pointer flex items-center gap-x-2 hover:text-blue-700 active:scale-95 whitespace-nowrap" id="nav-dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+            <a onclick="navigateTo('pacientes')" class="cursor-pointer flex items-center gap-x-2 hover:text-blue-700 active:scale-95 whitespace-nowrap" id="nav-pacientes">
+                <i class="fa-solid fa-users"></i>
+                <span>Pacientes</span>
+            </a>
+            <a onclick="navigateTo('agendamentos')" class="cursor-pointer flex items-center gap-x-2 hover:text-blue-700 active:scale-95 whitespace-nowrap" id="nav-agendamentos">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Agendamentos</span>
+            </a>
+            <a onclick="navigateTo('relatorios')" class="cursor-pointer flex items-center gap-x-2 hover:text-blue-700 active:scale-95 whitespace-nowrap" id="nav-relatorios">
+                <i class="fa-solid fa-chart-bar"></i>
+                <span>Relatórios</span>
+            </a>
+            
+            <div class="ml-auto flex items-center gap-x-2 text-xs bg-white px-3 md:px-4 py-1 rounded-3xl shadow-inner whitespace-nowrap">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span class="font-medium text-emerald-600 hidden sm:inline">Online • 14 pacientes hoje</span>
+                <span class="font-medium text-emerald-600 sm:hidden">Online</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex max-w-7xl mx-auto">
+        
+        <!-- SIDEBAR -->
+        <div class="w-72 bg-white border-r border-blue-200 min-h-[calc(100vh-140px)] py-6 px-4 hidden lg:flex flex-col">
+            <div class="px-4 mb-8">
+                <h2 class="uppercase text-blue-500 text-xs font-bold tracking-widest mb-3">Doenças Atípicas em Destaque</h2>
+                <div onclick="openPatientProntuarioById(1)" class="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-3xl cursor-pointer mb-2">
+                    <div class="text-3xl">🧠</div>
+                    <div class="flex-1">
+                        <p class="font-semibold">Maria Silva • 76 anos</p>
+                        <p class="text-xs text-blue-600">Alzheimer atípica (variante logopênica)</p>
+                    </div>
+                    <span class="text-emerald-600 text-xs font-medium">Katz: 4/6</span>
+                </div>
+                <div onclick="openPatientProntuarioById(2)" class="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-3xl cursor-pointer">
+                    <div class="text-3xl">🦵</div>
+                    <div class="flex-1">
+                        <p class="font-semibold">João Mendes • 82 anos</p>
+                        <p class="text-xs text-blue-600">Parkinson atípico + demência</p>
+                    </div>
+                    <span class="text-amber-600 text-xs font-medium">Pfeffer: 8/30</span>
+                </div>
+            </div>
+            
+            <div class="mt-auto px-4 text-xs text-blue-400">
+                <p class="flex items-center gap-2"><i class="fa-solid fa-lock"></i> Sistema seguro • LGPD</p>
+                <p class="mt-6 text-center">PRONTTO v2.4 • Gerontologia 2026</p>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 p-4 md:p-8" id="main-content">
+            <!-- Será preenchido via JavaScript -->
+        </div>
+    </div>
+
+    <!-- MODAL AGENDAMENTO -->
+    <div id="appointment-modal" onclick="if(event.target.id==='appointment-modal')closeAppointmentModal()" 
+         class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+        <div onclick="event.stopImmediatePropagation()" class="bg-white rounded-3xl max-w-2xl w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-semibold mb-6 text-blue-700">Novo Agendamento</h3>
+            
+            <!-- Tabs para Agendar vs Cadastrar Paciente -->
+            <div class="flex gap-4 mb-6 border-b border-blue-200">
+                <button onclick="switchAppointmentTab('agendar')" id="tab-agendar" class="pb-3 font-medium text-blue-700 border-b-2 border-blue-600">
+                    📅 Agendar
+                </button>
+                <button onclick="switchAppointmentTab('cadastrar')" id="tab-cadastrar" class="pb-3 font-medium text-blue-400 border-b-2 border-transparent hover:text-blue-700">
+                    ➕ Cadastrar Paciente
+                </button>
+            </div>
+
+            <!-- TAB 1: AGENDAR -->
+            <div id="tab-agendar-content" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-blue-700 mb-2">Selecionar Paciente</label>
+                    <select id="appointment-patient" class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="">-- Escolha um paciente --</option>
+                    </select>
+                    <p class="text-xs text-blue-500 mt-2">Não encontra o paciente? <button onclick="switchAppointmentTab('cadastrar')" class="text-blue-600 font-medium underline">Cadastre um novo.</button></p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-blue-700 mb-2">Tipo de Atendimento</label>
+                    <select id="appointment-type" class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="">-- Escolha o tipo --</option>
+                        <option value="avaliacao">🔍 Avaliação Inicial</option>
+                        <option value="terapia_cognitiva">🧠 Terapia Cognitiva</option>
+                        <option value="reabilitacao_motora">🦵 Reabilitação Motora</option>
+                        <option value="atividade_vida_diaria">🛁 Atividade de Vida Diária</option>
+                        <option value="acompanhamento">📋 Acompanhamento</option>
+                        <option value="reavaliacao">📊 Reavaliação</option>
+                        <option value="outro">📌 Outro</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-700 mb-2">Data do Agendamento</label>
+                        <input type="date" id="appointment-date" class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600" min="">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-700 mb-2">Horário</label>
+                        <input type="time" id="appointment-time" class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-blue-700 mb-2">Observações (Opcional)</label>
+                    <textarea id="appointment-notes" placeholder="Ex: Paciente relata dor no ombro, quer trabalhar mobilidade..." 
+                              class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none" rows="4"></textarea>
+                </div>
+
+                <div class="flex gap-3 mt-8">
+                    <button onclick="closeAppointmentModal()" 
+                            class="flex-1 py-4 text-blue-700 font-medium border border-blue-200 rounded-3xl hover:bg-blue-50">Cancelar</button>
+                    <button onclick="saveNewAppointment()" 
+                            class="flex-1 py-4 bg-blue-600 text-white font-semibold rounded-3xl hover:bg-blue-700">Agendar</button>
+                </div>
+            </div>
+
+            <!-- TAB 2: CADASTRAR PACIENTE -->
+            <div id="tab-cadastrar-content" class="hidden space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-700 mb-2">Nome Completo *</label>
+                        <input type="text" id="new-patient-name" placeholder="Maria Silva" 
+                               class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-700 mb-2">CPF</label>
+                        <input type="text" id="new-patient-cpf" placeholder="123.456.789-00" 
+                               class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-700 mb-2">Data de Nascimento</label>
+                        <input type="date" id="new-patient-birthdate" 
+                               class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-700 mb-2">Sexo</label>
+                        <select id="new-patient-sex" class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600">
+                            <option value="">-- Selecione --</option>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Feminino">Feminino</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-blue-700 mb-2">Queixa Principal</label>
+                    <textarea id="new-patient-complaint" placeholder="Descreva a queixa principal..." 
+                              class="w-full px-4 py-3 border border-blue-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none" rows="3"></textarea>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-3xl p-4">
+                    <p class="text-sm text-blue-700">ℹ️ Após cadastrar, você poderá completar outros dados no formulário de pacientes completo.</p>
+                </div>
+
+                <div class="flex gap-3 mt-8">
+                    <button onclick="switchAppointmentTab('agendar')" 
+                            class="flex-1 py-4 text-blue-700 font-medium border border-blue-200 rounded-3xl hover:bg-blue-50">← Voltar</button>
+                    <button onclick="createNewPatientAndSchedule()" 
+                            class="flex-1 py-4 bg-blue-600 text-white font-semibold rounded-3xl hover:bg-blue-700">Cadastrar e Agendar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOTO -->
+    <div id="photo-modal" onclick="if(event.target.id==='photo-modal')hidePhotoModal()" 
+         class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+        <div onclick="event.stopImmediatePropagation()" class="bg-white rounded-3xl max-w-md w-full mx-4 p-8">
+            <h3 class="text-2xl font-semibold mb-6 text-blue-700">Foto do Paciente</h3>
+            <div class="border-2 border-dashed border-blue-300 rounded-3xl p-8 text-center">
+                <input type="file" id="photo-upload" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+                <button onclick="document.getElementById('photo-upload').click()" 
+                        class="w-full py-12 flex flex-col items-center justify-center hover:bg-blue-50 rounded-3xl">
+                    <i class="fa-solid fa-camera text-6xl text-blue-400 mb-4"></i>
+                    <p class="font-medium text-blue-700">Clique para selecionar foto</p>
+                    <p class="text-xs text-blue-400 mt-1">JPG, PNG • até 5MB</p>
+                </button>
+            </div>
+            <div id="photo-preview" class="hidden mt-6"></div>
+            
+            <div class="flex gap-3 mt-8">
+                <button onclick="hidePhotoModal()" 
+                        class="flex-1 py-4 text-blue-700 font-medium border border-blue-200 rounded-3xl">Cancelar</button>
+                <button onclick="savePhoto()" 
+                        class="flex-1 py-4 bg-blue-600 text-white font-semibold rounded-3xl">Salvar Foto</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * PRONTTO - Sistema Web Completo de Prontuário para Terapia Ocupacional
+         * Desenvolvido com TypeScript-like + Tailwind + Vanilla JS
+         * Totalmente responsivo, profissional e estruturado conforme solicitado
+         * Cores: Azul profissional (blue-600)
+         * Dados extraídos e estruturados dos PDFs fornecidos (Katz, GDS, Pfeffer, Mini-Mental, Anamnese)
+         * Não utiliza PDFs - tudo em formulários interativos e dados JSON
+         */
+
+        // ==================== TIPOS (TypeScript style) ====================
+        /**
+         * @typedef {Object} Patient
+         * @property {number} id
+         * @property {string} nome
+         * @property {string} cpf
+         * @property {string} dataNascimento
+         * @property {number} idade
+         * @property {string} sexo
+         * @property {string} estadoCivil
+         * @property {string} naturalidade
+         * @property {string} escolaridade
+         * @property {string} religiosidade
+         * @property {string} queixaPrincipal
+         * @property {string} historiaSaude
+         * @property {string[]} doencasCronicas
+         * @property {string} fotoBase64
+         * @property {string} avaliacao_avd
+         * @property {string} avaliacao_aivd
+         * @property {string} gestao_saude
+         * @property {string} descanso_sono
+         * @property {string} educacao
+         * @property {string} trabalho
+         * @property {string} lazer
+         * @property {string} participacao_social
+         * @property {Object} habilidades_motoras
+         * @property {Object} habilidades_processuais
+         * @property {Object} funcoes_sensoriais
+         * @property {Object} habilidades_interacao_social
+         * @property {Object} papeis_ocupacionais
+         * @property {Object} rotina_diaria
+         * @property {Object} plano_terapeutico
+         * @property {string} observacoes_complementares
+         * @property {Object} prontuario
+         * @property {Object} prontuario.anamnese
+         * @property {Object} prontuario.katz
+         * @property {Object} prontuario.gds
+         * @property {Object} prontuario.pfeffer
+         * @property {Object} prontuario.miniMental
+         * @property {Array} prontuario.evolucoes
+         * @property {Object} prontuario.prescricao
+         */
+
+        // ==================== DADOS INICIAIS ====================
+        let patients = []
+        let appointments = []
+        let currentPatientId = null
+        let currentView = 'dashboard'
+        let selectedAppointmentDate = new Date().toISOString().split('T')[0]
+
+        // Status de agendamentos com cores
+        const appointmentStatuses = {
+            confirmado: { label: '✅ Confirmado', color: 'emerald', icon: '✓' },
+            pendente: { label: '⏳ Pendente', color: 'amber', icon: '⏳' },
+            cancelado: { label: '❌ Cancelado', color: 'rose', icon: '✕' },
+            falta: { label: '🔴 Falta', color: 'red', icon: '—' },
+            nao_compareceu: { label: '⚫ Não Compareceu', color: 'slate', icon: '—' },
+            concluido: { label: '🏁 Concluído', color: 'blue', icon: '✓' }
+        }
+
+        // Carrega ou cria dados de exemplo (com doenças atípicas)
+        function loadDemoData() {
+            const saved = localStorage.getItem('prontto_patients')
+            if (saved) {
+                patients = JSON.parse(saved)
+                // Ensure all new fields are present
+                patients.forEach(p => {
+                    p.avaliacao_avd = p.avaliacao_avd || ""
+                    p.avaliacao_aivd = p.avaliacao_aivd || ""
+                    p.gestao_saude = p.gestao_saude || ""
+                    p.descanso_sono = p.descanso_sono || ""
+                    p.educacao = p.educacao || ""
+                    p.trabalho = p.trabalho || ""
+                    p.lazer = p.lazer || ""
+                    p.participacao_social = p.participacao_social || ""
+                    p.habilidades_motoras = p.habilidades_motoras || {}
+                    p.habilidades_processuais = p.habilidades_processuais || {}
+                    p.funcoes_sensoriais = p.funcoes_sensoriais || {}
+                    p.habilidades_interacao_social = p.habilidades_interacao_social || {}
+                    p.papeis_ocupacionais = p.papeis_ocupacionais || {}
+                    p.rotina_diaria = p.rotina_diaria || {}
+                    p.observacoes_complementares = p.observacoes_complementares || ""
+                    p.plano_terapeutico = p.plano_terapeutico || {}
+                })
+                return
+            }
+
+            patients = [
+                {
+                    id: 1,
+                    nome: "Maria Silva",
+                    cpf: "123.456.789-00",
+                    dataNascimento: "1948-05-12",
+                    idade: 77,
+                    sexo: "Feminino",
+                    estadoCivil: "Viúva",
+                    naturalidade: "Campos dos Goytacazes - RJ",
+                    escolaridade: "Ensino Médio",
+                    religiosidade: "Católica",
+                    queixaPrincipal: "Dificuldade para realizar atividades instrumentais e esquecimento recente",
+                    historiaSaude: "Diagnóstico de Alzheimer atípica (variante logopênica) há 14 meses. Em uso de donepezila 10mg.",
+                    doencasCronicas: ["Hipertensão", "Osteoporose", "Alzheimer atípica"],
+                    avaliacao_avd: "Paciente apresenta dependência parcial em atividades básicas como banho e vestir-se, necessitando supervisão constante.",
+                    avaliacao_aivd: "Dificuldade significativa em gerenciamento financeiro e preparo de refeições. Esquece compromissos e necessita ajuda para compras.",
+                    gestao_saude: "Não consegue autogestionar medicações sem supervisão. Esquece consultas médicas.",
+                    descanso_sono: "Apresenta insônia noturna e sonolência diurna devido ao quadro demencial.",
+                    educacao: "Não participa de atividades educacionais formais. Interesse limitado em leitura e aprendizado.",
+                    trabalho: "Aposentada, não realiza atividades laborais.",
+                    lazer: "Participa pouco de atividades recreativas devido à falta de iniciativa.",
+                    participacao_social: "Isolamento social progressivo. Dificuldade em manter conversas e relacionamentos.",
+                    habilidades_motoras: {},
+                    habilidades_processuais: {},
+                    funcoes_sensoriais: {},
+                    habilidades_interacao_social: {},
+                    rotina_diaria: {},
+                    observacoes_complementares: "",
+                    plano_terapeutico: {},
+                    fotoBase64: null,
+                    prontuario: {
+                        anamnese: { preenchido: true, data: "2026-03-20" },
+                        katz: { banheiro: true, vestir: true, higiene: false, transferencia: true, continencia: true, alimentacao: false, total: 4 },
+                        gds: { respostas: [true, false, true, true, false, true, false, false, true, false, true, false, true, false, true], total: 8 },
+                        pfeffer: { q1: 1, q2: 2, q3: 0, q4: 3, q5: 1, q6: 0, q7: 2, q8: 1, q9: 0, q10: 2, total: 12 },
+                        miniMental: { orientacaoTemporal: 4, orientacaoEspacial: 5, registro: 3, atencao: 4, evocacao: 2, nomear: 2, repetir: 1, comando: 3, frase: 1, ler: 1, copiar: 1, total: 27 },
+                        evolucoes: [
+                            { data: "2026-03-28", texto: "Paciente demonstrou boa adesão à terapia de orientação temporal. Realizou 80% das tarefas propostas." }
+                        ],
+                        prescricao: { observacoes: "Manter estimulação cognitiva 3x/semana. Foto do paciente atualizada.", fotoBase64: null }
+                    }
+                },
+                {
+                    id: 2,
+                    nome: "João Mendes",
+                    cpf: "987.654.321-00",
+                    dataNascimento: "1943-11-08",
+                    idade: 82,
+                    sexo: "Masculino",
+                    estadoCivil: "Casado",
+                    naturalidade: "Campos dos Goytacazes - RJ",
+                    escolaridade: "Ensino Fundamental",
+                    religiosidade: "Evangélico",
+                    queixaPrincipal: "Tremores, rigidez e dependência parcial nas ABVD",
+                    historiaSaude: "Parkinson atípico + demência leve. Em uso de levodopa + carbidopa.",
+                    doencasCronicas: ["Parkinson atípico", "Diabetes", "Artrose"],
+                    avaliacao_avd: "Dependência em higiene pessoal e mobilidade devido a rigidez e tremores.",
+                    avaliacao_aivd: "Dificuldade em preparo de refeições e limpeza devido a movimentos lentos. Gerenciamento financeiro comprometido.",
+                    gestao_saude: "Consegue tomar medicações com lembretes, mas esquece horários.",
+                    descanso_sono: "Sono fragmentado devido aos sintomas motores.",
+                    educacao: "Não participa de educação formal. Interesse em leitura sobre saúde.",
+                    trabalho: "Aposentado, não trabalha.",
+                    lazer: "Gosta de caminhadas leves, mas limitado pela mobilidade.",
+                    participacao_social: "Participa de reuniões familiares, mas com dificuldade de comunicação devido à demência.",
+                    habilidades_motoras: {},
+                    habilidades_processuais: {},
+                    funcoes_sensoriais: {},
+                    habilidades_interacao_social: {},
+                    rotina_diaria: {},
+                    observacoes_complementares: "",
+                    plano_terapeutico: {},
+                    fotoBase64: null,
+                    prontuario: {
+                        anamnese: { preenchido: true, data: "2026-03-15" },
+                        katz: { banheiro: false, vestir: false, higiene: false, transferencia: true, continencia: true, alimentacao: true, total: 3 },
+                        gds: { respostas: Array(15).fill(false), total: 2 },
+                        pfeffer: { q1: 3, q2: 3, q3: 2, q4: 3, q5: 2, q6: 1, q7: 2, q8: 3, q9: 1, q10: 3, total: 23 },
+                        miniMental: { orientacaoTemporal: 3, orientacaoEspacial: 4, registro: 2, atencao: 2, evocacao: 1, nomear: 1, repetir: 0, comando: 2, frase: 1, ler: 1, copiar: 0, total: 17 },
+                        evolucoes: [],
+                        prescricao: { observacoes: "", fotoBase64: null }
+                    }
+                }
+            ]
+            savePatients()
+        }
+
+        function savePatients() {
+            localStorage.setItem('prontto_patients', JSON.stringify(patients))
+        }
+
+        // ==================== AGENDAMENTOS - CARREGAMENTO E SALVAMENTO ====================
+        function loadAppointments() {
+            const saved = localStorage.getItem('prontto_appointments')
+            if (saved) {
+                appointments = JSON.parse(saved)
+            } else {
+                // Agendamentos de exemplo
+                appointments = [
+                    {
+                        id: 1,
+                        patientId: 1,
+                        patientName: "Maria Silva",
+                        type: "terapia_cognitiva",
+                        date: "2026-04-04",
+                        time: "09:00",
+                        status: "confirmado",
+                        notes: ""
+                    },
+                    {
+                        id: 2,
+                        patientId: 2,
+                        patientName: "João Mendes",
+                        type: "reabilitacao_motora",
+                        date: "2026-04-05",
+                        time: "14:30",
+                        status: "pendente",
+                        notes: ""
+                    }
+                ]
+                saveAppointments()
+            }
+        }
+
+        function saveAppointments() {
+            localStorage.setItem('prontto_appointments', JSON.stringify(appointments))
+        }
+
+        function getNextAppointmentId() {
+            return appointments.length > 0 ? Math.max(...appointments.map(a => a.id)) + 1 : 1
+        }
+
+        // ==================== NAVEGAÇÃO ====================
+        function navigateTo(view) {
+            currentView = view
+            document.querySelectorAll('#nav-dashboard, #nav-pacientes, #nav-agendamentos, #nav-relatorios').forEach(el => el.classList.remove('text-blue-700', 'font-semibold'))
+            document.getElementById('nav-' + view).classList.add('text-blue-700', 'font-semibold')
+            renderMainContent()
+        }
+
+        function renderMainContent() {
+            const main = document.getElementById('main-content')
+            
+            if (currentView === 'dashboard') {
+                main.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-3xl md:text-4xl font-semibold mb-2">Bem-vinda, Jackline! 👋</h1>
+                    <p class="text-blue-600 mb-6 md:mb-8">Sexta-feira, 03 de abril de 2026 • 17:14</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+                        <div class="bg-white rounded-3xl p-4 md:p-6 prontuario-card">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <p class="text-blue-600 text-sm">PACIENTES HOJE</p>
+                                    <p class="text-4xl md:text-5xl font-bold text-blue-700">14</p>
+                                </div>
+                                <i class="fa-solid fa-users text-4xl md:text-5xl text-blue-200"></i>
+                            </div>
+                            <div class="text-emerald-500 text-sm mt-4 md:mt-6 flex items-center"><i class="fa-solid fa-arrow-trend-up mr-1"></i> +3 desde ontem</div>
+                        </div>
+                        <div class="bg-white rounded-3xl p-4 md:p-6 prontuario-card">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <p class="text-blue-600 text-sm">ESCALAS REALIZADAS</p>
+                                    <p class="text-4xl md:text-5xl font-bold text-blue-700">8</p>
+                                </div>
+                                <i class="fa-solid fa-clipboard-check text-4xl md:text-5xl text-blue-200"></i>
+                            </div>
+                            <div class="text-amber-500 text-sm mt-4 md:mt-6">Katz, GDS e Pfeffer em destaque</div>
+                        </div>
+                        <div class="bg-white rounded-3xl p-4 md:p-6 prontuario-card sm:col-span-2 lg:col-span-1">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <p class="text-blue-600 text-sm">DOENÇAS ATÍPICAS ATIVAS</p>
+                                    <p class="text-4xl md:text-5xl font-bold text-blue-700">6</p>
+                                </div>
+                                <i class="fa-solid fa-brain text-4xl md:text-5xl text-blue-200"></i>
+                            </div>
+                            <div class="text-rose-500 text-sm mt-4 md:mt-6">Alzheimer atípica • Parkinson atípico</div>
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-xl md:text-2xl font-semibold mb-4 flex items-center gap-2"><i class="fa-solid fa-heart-pulse"></i> Pacientes com Doenças Atípicas</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="atypical-list">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>`
+                renderAtypicalPatients()
+            } 
+            else if (currentView === 'pacientes') {
+                main.innerHTML = `
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-3xl font-semibold">Pacientes</h1>
+                    <button onclick="showNewPatientForm()" 
+                            class="bg-blue-600 text-white px-8 py-4 rounded-3xl flex items-center gap-x-3 hover:bg-blue-700 shadow-lg">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Novo Paciente</span>
+                    </button>
+                </div>
+                <input type="text" id="search-input" placeholder="🔎 Buscar por nome, CPF ou diagnóstico..." 
+                       onkeyup="if(event.key==='Enter') filterPatients()" 
+                       class="w-full max-w-md bg-white border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400 mb-8">
+                <div id="patients-table" class="bg-white rounded-3xl overflow-hidden"></div>`
+                renderPatientsTable()
+            } 
+            else if (currentView === 'agendamentos') {
+                main.innerHTML = `
+                <h1 class="text-2xl md:text-3xl font-semibold mb-6 md:mb-8">Agendamentos</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-6 md:mb-8">
+                    <div class="bg-white rounded-3xl p-4 md:p-6">
+                        <h3 class="font-semibold text-blue-700 mb-2">Hoje</h3>
+                        <p class="text-3xl font-bold text-blue-600">14</p>
+                        <p class="text-sm text-blue-500">agendamentos</p>
+                    </div>
+                    <div class="bg-white rounded-3xl p-4 md:p-6">
+                        <h3 class="font-semibold text-blue-700 mb-2">Esta Semana</h3>
+                        <p class="text-3xl font-bold text-blue-600">89</p>
+                        <p class="text-sm text-blue-500">agendamentos</p>
+                    </div>
+                    <div class="bg-white rounded-3xl p-4 md:p-6">
+                        <h3 class="font-semibold text-blue-700 mb-2">Confirmados</h3>
+                        <p class="text-3xl font-bold text-emerald-600">12</p>
+                        <p class="text-sm text-emerald-500">hoje</p>
+                    </div>
+                    <div class="bg-white rounded-3xl p-4 md:p-6">
+                        <h3 class="font-semibold text-blue-700 mb-2">Pendentes</h3>
+                        <p class="text-3xl font-bold text-amber-600">2</p>
+                        <p class="text-sm text-amber-500">hoje</p>
+                    </div>
+                </div>
+                
+                <!-- CALENDÁRIO E AGENDAMENTOS -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                    <div class="bg-white rounded-3xl p-4 md:p-6">
+                        <div id="calendar-container"></div>
+                    </div>
+                    <div class="bg-white rounded-3xl p-4 md:p-6">
+                        <div id="day-appointments-container"></div>
+                    </div>
+                </div>
+                
+                <!-- BOTÃO FLUTUANTE -->
+                <div class="mt-6 md:mt-8 text-center">
+                    <button onclick="addNewAppointment()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-3xl font-semibold flex items-center gap-x-3 mx-auto shadow-lg">
+                        <i class="fa-solid fa-plus"></i>
+                        Novo Agendamento
+                    </button>
+                </div>`
+                renderCalendarAndAppointments()
+            } 
+            else if (currentView === 'relatorios') {
+                main.innerHTML = `
+                <h1 class="text-3xl font-semibold mb-8">Relatórios e Estatísticas</h1>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-white p-8 rounded-3xl">
+                        <h4 class="font-medium mb-4">Média de pontuação Katz nos últimos 30 dias</h4>
+                        <div class="text-7xl font-bold text-blue-600">4.2 <span class="text-base font-normal text-blue-400">/ 6</span></div>
+                        <p class="text-emerald-600 text-sm">Melhora de 12% em relação ao mês anterior</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl">
+                        <h4 class="font-medium mb-4">Pacientes com suspeita de depressão (GDS ≥ 6)</h4>
+                        <div class="text-7xl font-bold text-rose-600">3</div>
+                        <p class="text-blue-600">Maria Silva, João Mendes e Ana Costa</p>
+                    </div>
+                </div>`
+            }
+        }
+
+        function renderAtypicalPatients() {
+            const container = document.getElementById('atypical-list')
+            if (!container) return
+            container.innerHTML = patients.map(p => `
+                <div onclick="openPatientProntuarioById(${p.id})" class="bg-white rounded-3xl p-6 cursor-pointer hover:shadow-xl border border-transparent hover:border-blue-200">
+                    <div class="flex gap-4">
+                        <div class="text-5xl">${p.doencasCronicas.includes('Alzheimer atípica') ? '🧠' : '🦵'}</div>
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <p class="font-semibold">${p.nome}</p>
+                                <span class="text-xs bg-blue-100 text-blue-700 px-3 rounded-3xl flex items-center">${p.idade} anos</span>
+                            </div>
+                            <p class="text-sm text-blue-600">${p.doencasCronicas.join(' • ')}</p>
+                            <div class="mt-6 text-xs flex justify-between">
+                                <span>Katz: <strong>${p.prontuario.katz.total}/6</strong></span>
+                                <span>Pfeffer: <strong>${p.prontuario.pfeffer.total}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        function renderPatientsTable() {
+            const container = document.getElementById('patients-table')
+            container.innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px]">
+                    <thead class="bg-blue-50 text-blue-700 text-xs font-medium">
+                        <tr>
+                            <th class="text-left px-4 md:px-8 py-5">Nome</th>
+                            <th class="text-left px-4 md:px-8 py-5">CPF</th>
+                            <th class="text-left px-4 md:px-8 py-5">Idade</th>
+                            <th class="text-left px-4 md:px-8 py-5">Diagnóstico principal</th>
+                            <th class="text-left px-4 md:px-8 py-5">Última avaliação</th>
+                            <th class="w-40"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        ${patients.map(p => `
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-4 md:px-8 py-5 font-medium">${p.nome}</td>
+                            <td class="px-4 md:px-8 py-5">${p.cpf}</td>
+                            <td class="px-4 md:px-8 py-5">${p.idade} anos</td>
+                            <td class="px-4 md:px-8 py-5">${p.doencasCronicas[0] || '—'}</td>
+                            <td class="px-4 md:px-8 py-5 text-xs text-blue-500">28/03/2026</td>
+                            <td class="px-4 md:px-8 py-5 flex gap-2">
+                                <button onclick="openPatientProntuarioById(${p.id}); event.stopImmediatePropagation()" 
+                                        class="bg-blue-600 text-white px-3 md:px-4 py-2 text-xs rounded-3xl flex items-center gap-1">
+                                    <i class="fa-solid fa-folder-open"></i>
+                                    <span class="hidden sm:inline">Abrir</span>
+                                </button>
+                                <button onclick="showEditPatientForm(${p.id}); event.stopImmediatePropagation()" 
+                                        class="bg-blue-600 text-white px-3 md:px-4 py-2 text-xs rounded-3xl flex items-center gap-1">
+                                    <i class="fa-solid fa-edit"></i>
+                                    <span class="hidden sm:inline">Editar</span>
+                                </button>
+                                <button onclick="deletePatient(${p.id}); event.stopImmediatePropagation()" 
+                                        class="bg-red-600 text-white px-3 md:px-4 py-2 text-xs rounded-3xl flex items-center gap-1">
+                                    <i class="fa-solid fa-trash"></i>
+                                    <span class="hidden sm:inline">Excluir</span>
+                                </button>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>`
+        }
+
+        function filterPatients() {
+            const term = document.getElementById('search-input').value.toLowerCase()
+            const filtered = patients.filter(p => 
+                p.nome.toLowerCase().includes(term) || 
+                p.cpf.toLowerCase().includes(term) ||
+                p.doencasCronicas.some(d => d.toLowerCase().includes(term))
+            )
+            // Re-render table with filtered
+            const container = document.getElementById('patients-table')
+            // Simple re-render logic
+            container.querySelector('tbody').innerHTML = filtered.map(p => `
+                <tr class="hover:bg-blue-50">
+                    <td class="px-8 py-5 font-medium">${p.nome}</td>
+                    <td class="px-8 py-5">${p.cpf}</td>
+                    <td class="px-8 py-5">${p.idade} anos</td>
+                    <td class="px-8 py-5">${p.doencasCronicas[0] || '—'}</td>
+                    <td class="px-8 py-5 text-xs text-blue-500">28/03/2026</td>
+                    <td class="px-8 py-5 flex gap-2">
+                        <button onclick="openPatientProntuarioById(${p.id}); event.stopImmediatePropagation()" 
+                                class="bg-blue-600 text-white px-4 py-2 text-xs rounded-3xl flex items-center gap-1">
+                            <i class="fa-solid fa-folder-open"></i>
+                            Abrir
+                        </button>
+                        <button onclick="showEditPatientForm(${p.id}); event.stopImmediatePropagation()" 
+                                class="bg-blue-600 text-white px-4 py-2 text-xs rounded-3xl flex items-center gap-1">
+                            <i class="fa-solid fa-edit"></i>
+                            Editar
+                        </button>
+                        <button onclick="deletePatient(${p.id}); event.stopImmediatePropagation()" 
+                                class="bg-red-600 text-white px-4 py-2 text-xs rounded-3xl flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i>
+                            Excluir
+                        </button>
+                    </td>
+                </tr>`).join('')
+        }
+
+        // ==================== CADASTRO DE PACIENTE ====================
+        function showNewPatientForm() {
+            const main = document.getElementById('main-content')
+            main.innerHTML = `
+            <div class="max-w-4xl mx-auto bg-white rounded-3xl p-10">
+                <h1 class="text-3xl font-semibold mb-8 flex items-center gap-3"><i class="fa-solid fa-user-plus"></i> Cadastro de Novo Paciente</h1>
+                
+                <form id="new-patient-form" onsubmit="handleNewPatient(event)">
+                    <div class="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Nome completo</label>
+                            <input type="text" id="nome" required class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Data de nascimento</label>
+                            <input type="date" id="dataNascimento" required class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">CPF</label>
+                            <input type="text" id="cpf" placeholder="000.000.000-00" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Sexo</label>
+                            <select id="sexo" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                                <option>Feminino</option>
+                                <option>Masculino</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Estado civil</label>
+                            <input type="text" id="estadoCivil" value="Viúva" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Naturalidade</label>
+                            <input type="text" id="naturalidade" value="Campos dos Goytacazes - RJ" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Escolaridade</label>
+                            <input type="text" id="escolaridade" value="Ensino Médio" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Religiosidade</label>
+                            <input type="text" id="religiosidade" value="Católica" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Queixa principal</label>
+                            <textarea id="queixaPrincipal" rows="2" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400"></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Doenças Crônicas (marque todas)</label>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Hipertensão" class="doenca"> Hipertensão</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Diabetes" class="doenca"> Diabetes</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Osteoporose" class="doenca"> Osteoporose</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Alzheimer atípica" class="doenca"> Alzheimer atípica</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Parkinson atípico" class="doenca"> Parkinson atípico</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Artrose" class="doenca"> Artrose</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-12 flex gap-4">
+                        <button type="button" onclick="navigateTo('pacientes')" class="flex-1 py-5 text-blue-700 font-medium border border-blue-200 rounded-3xl">Cancelar</button>
+                        <button type="submit" class="flex-1 py-5 bg-blue-600 text-white font-semibold rounded-3xl">Cadastrar Paciente e Abrir Prontuário</button>
+                    </div>
+                </form>
+            </div>`
+        }
+
+        function handleNewPatient(e) {
+            e.preventDefault()
+            
+            const formData = {
+                nome: document.getElementById('nome').value,
+                cpf: document.getElementById('cpf').value,
+                dataNascimento: document.getElementById('dataNascimento').value,
+                idade: Math.floor((new Date() - new Date(document.getElementById('dataNascimento').value)) / (1000*60*60*24*365)),
+                sexo: document.getElementById('sexo').value,
+                estadoCivil: document.getElementById('estadoCivil').value,
+                naturalidade: document.getElementById('naturalidade').value,
+                escolaridade: document.getElementById('escolaridade').value,
+                religiosidade: document.getElementById('religiosidade').value,
+                queixaPrincipal: document.getElementById('queixaPrincipal').value,
+                historiaSaude: "História inicial registrada no cadastro",
+                doencasCronicas: Array.from(document.querySelectorAll('.doenca:checked')).map(ch => ch.value),
+                avaliacao_avd: "",
+                avaliacao_aivd: "",
+                gestao_saude: "",
+                descanso_sono: "",
+                educacao: "",
+                trabalho: "",
+                lazer: "",
+                participacao_social: "",
+                habilidades_motoras: {},
+                habilidades_processuais: {},
+                funcoes_sensoriais: {},
+                habilidades_interacao_social: {},
+                papeis_ocupacionais: {},
+                rotina_diaria: {},
+                observacoes_complementares: "",
+                plano_terapeutico: {},
+                fotoBase64: null,
+                prontuario: {
+                    anamnese: { preenchido: true, data: new Date().toISOString().split('T')[0] },
+                    katz: { banheiro: true, vestir: true, higiene: true, transferencia: true, continencia: true, alimentacao: true, total: 6 },
+                    gds: { respostas: Array(15).fill(false), total: 0 },
+                    pfeffer: { q1:0,q2:0,q3:0,q4:0,q5:0,q6:0,q7:0,q8:0,q9:0,q10:0, total: 0 },
+                    miniMental: { orientacaoTemporal:5, orientacaoEspacial:5, registro:3, atencao:5, evocacao:3, nomear:2, repetir:1, comando:3, frase:1, ler:1, copiar:1, total:30 },
+                    evolucoes: [],
+                    prescricao: { observacoes: "", fotoBase64: null }
+                }
+            }
+            
+            const newId = Math.max(0, ...patients.map(p => p.id)) + 1
+            const newPatient = { id: newId, ...formData }
+            patients.unshift(newPatient)
+            savePatients()
+            
+            alert('✅ Paciente cadastrado com sucesso!')
+            openPatientProntuarioById(newId)
+        }
+
+        function showEditPatientForm(id) {
+            const patient = patients.find(p => p.id === id)
+            if (!patient) return
+            
+            const main = document.getElementById('main-content')
+            main.innerHTML = `
+            <div class="max-w-4xl mx-auto bg-white rounded-3xl p-10">
+                <h1 class="text-3xl font-semibold mb-8 flex items-center gap-3"><i class="fa-solid fa-user-edit"></i> Editar Cadastro — ${patient.nome}</h1>
+                
+                <form id="edit-patient-form" onsubmit="handleEditPatient(event, ${id})">
+                    <div class="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Nome completo</label>
+                            <input type="text" id="edit-nome" required value="${patient.nome}" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Data de nascimento</label>
+                            <input type="date" id="edit-dataNascimento" required value="${patient.dataNascimento}" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">CPF</label>
+                            <input type="text" id="edit-cpf" placeholder="000.000.000-00" value="${patient.cpf}" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Sexo</label>
+                            <select id="edit-sexo" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                                <option ${patient.sexo === 'Feminino' ? 'selected' : ''}>Feminino</option>
+                                <option ${patient.sexo === 'Masculino' ? 'selected' : ''}>Masculino</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Estado civil</label>
+                            <input type="text" id="edit-estadoCivil" value="${patient.estadoCivil}" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Naturalidade</label>
+                            <input type="text" id="edit-naturalidade" value="${patient.naturalidade}" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Escolaridade</label>
+                            <input type="text" id="edit-escolaridade" value="${patient.escolaridade}" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Religiosidade</label>
+                            <input type="text" id="edit-religiosidade" value="${patient.religiosidade}" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Queixa principal</label>
+                            <textarea id="edit-queixaPrincipal" rows="2" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400">${patient.queixaPrincipal}</textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-xs font-medium text-blue-700 block mb-1">Doenças Crônicas (marque todas)</label>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Hipertensão" class="edit-doenca" ${patient.doencasCronicas.includes('Hipertensão') ? 'checked' : ''}> Hipertensão</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Diabetes" class="edit-doenca" ${patient.doencasCronicas.includes('Diabetes') ? 'checked' : ''}> Diabetes</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Osteoporose" class="edit-doenca" ${patient.doencasCronicas.includes('Osteoporose') ? 'checked' : ''}> Osteoporose</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Alzheimer atípica" class="edit-doenca" ${patient.doencasCronicas.includes('Alzheimer atípica') ? 'checked' : ''}> Alzheimer atípica</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Parkinson atípico" class="edit-doenca" ${patient.doencasCronicas.includes('Parkinson atípico') ? 'checked' : ''}> Parkinson atípico</label>
+                                <label class="flex items-center gap-2 bg-blue-50 px-5 py-3 rounded-3xl cursor-pointer"><input type="checkbox" value="Artrose" class="edit-doenca" ${patient.doencasCronicas.includes('Artrose') ? 'checked' : ''}> Artrose</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-12 flex gap-4">
+                        <button type="button" onclick="navigateTo('pacientes')" class="flex-1 py-5 text-blue-700 font-medium border border-blue-200 rounded-3xl">Cancelar</button>
+                        <button type="submit" class="flex-1 py-5 bg-blue-600 text-white font-semibold rounded-3xl">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>`
+        }
+
+        function handleEditPatient(e, id) {
+            e.preventDefault()
+            
+            const patient = patients.find(p => p.id === id)
+            if (!patient) return
+            
+            patient.nome = document.getElementById('edit-nome').value
+            patient.cpf = document.getElementById('edit-cpf').value
+            patient.dataNascimento = document.getElementById('edit-dataNascimento').value
+            patient.idade = Math.floor((new Date() - new Date(patient.dataNascimento)) / (1000*60*60*24*365))
+            patient.sexo = document.getElementById('edit-sexo').value
+            patient.estadoCivil = document.getElementById('edit-estadoCivil').value
+            patient.naturalidade = document.getElementById('edit-naturalidade').value
+            patient.escolaridade = document.getElementById('edit-escolaridade').value
+            patient.religiosidade = document.getElementById('edit-religiosidade').value
+            patient.queixaPrincipal = document.getElementById('edit-queixaPrincipal').value
+            patient.doencasCronicas = Array.from(document.querySelectorAll('.edit-doenca:checked')).map(ch => ch.value)
+            
+            savePatients()
+            alert('✅ Cadastro atualizado com sucesso!')
+            navigateTo('pacientes')
+        }
+
+        function deletePatient(id) {
+            if (!confirm('Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.')) return
+            
+            const index = patients.findIndex(p => p.id === id)
+            if (index > -1) {
+                patients.splice(index, 1)
+                savePatients()
+                renderPatientsTable()
+                alert('✅ Paciente excluído com sucesso!')
+            }
+        }
+
+        function hidePatientForm() {
+            document.getElementById('patient-form').classList.add('hidden')
+        }
+
+        // ==================== PRONTUÁRIO ====================
+        function openPatientProntuarioById(id) {
+            currentPatientId = id
+            const patient = patients.find(p => p.id === id)
+            if (!patient) return
+            
+            const main = document.getElementById('main-content')
+            main.innerHTML = `
+            <div class="flex gap-6">
+                <!-- Coluna esquerda: Menu do Prontuário -->
+                <div class="w-72 bg-white rounded-3xl p-2 shadow-inner h-fit sticky top-6">
+                    <div class="px-6 pt-6 pb-4 border-b">
+                        <div class="flex items-center gap-4">
+                            <div id="patient-photo-small" onclick="showPhotoModal()" class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-4xl cursor-pointer overflow-hidden">
+                                ${patient.fotoBase64 ? `<img src="${patient.fotoBase64}" class="w-full h-full object-cover">` : '👤'}
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-semibold">${patient.nome}</h2>
+                                <p class="text-blue-600">${patient.idade} anos • ${patient.sexo}</p>
+                                <p class="text-xs mt-px">${patient.doencasCronicas[0]}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3">
+                        <div onclick="loadProntuarioSection('anamnese')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer active">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <span class="font-medium">Anamnese</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('plano')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                            <span class="font-medium">Plano Terapêutico</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('katz')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-shower"></i>
+                            <span class="font-medium">Escala Katz (ABVD)</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('gds')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-face-sad-tear"></i>
+                            <span class="font-medium">GDS-15 (Depressão)</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('pfeffer')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-house"></i>
+                            <span class="font-medium">Pfeffer (Atividades Funcionais)</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('miniMental')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-brain"></i>
+                            <span class="font-medium">Mini-Mental</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('evolucao')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-notes-medical"></i>
+                            <span class="font-medium">Evolução Diária</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('prescricao')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-prescription"></i>
+                            <span class="font-medium">Prescrição / Foto</span>
+                        </div>
+                        <div onclick="loadProntuarioSection('historico')" class="prontuario-menu-item flex items-center gap-3 px-6 py-4 hover:bg-blue-100 rounded-3xl cursor-pointer">
+                            <i class="fa-solid fa-history"></i>
+                            <span class="font-medium">Histórico do Paciente</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Área de conteúdo do prontuário -->
+                <div class="flex-1 bg-white rounded-3xl p-8" id="prontuario-content">
+                    <!-- Conteúdo dinâmico carregado aqui -->
+                </div>
+            </div>`
+            
+            // Carrega a primeira seção (Anamnese)
+            loadProntuarioSection('anamnese')
+            document.getElementById('header-patient-name').innerHTML = `${patient.nome} <span class="text-xs ml-2 bg-blue-100 text-blue-700 px-2 py-px rounded-2xl">${patient.doencasCronicas[0]}</span>`
+        }
+
+        function loadProntuarioSection(section) {
+            const patient = patients.find(p => p.id === currentPatientId)
+            if (!patient) return
+            
+            // Remove active de todos
+            document.querySelectorAll('.prontuario-menu-item').forEach(el => el.classList.remove('active', 'bg-blue-100'))
+            // Ativa o clicado (via event delegation no HTML)
+            
+            const content = document.getElementById('prontuario-content')
+            
+            if (section === 'anamnese') {
+                const areas = [
+                    { field: 'avaliacao_avd', title: 'Atividades de Vida Diária', desc: 'Banho, usar vaso sanitário e realizar higiene íntima, vestir, deglutir/comer, alimentação, mobilidade funcional, cuidado com equipamentos pessoais, higiene pessoal e atividade sexual.' },
+                    { field: 'avaliacao_aivd', title: 'Atividades Instrumentais de Vida Diária', desc: 'Cuidar de outros, de animais, educar criança, gerenciamento de comunicação, mobilidade na comunidade, gerenciamento financeiro, gerenciamento e manutenção da saúde, gerenciamento do lar, preparar refeições e limpeza, atividades e expressão religiosa e espiritual, segurança, fazer compras.' },
+                    { field: 'gestao_saude', title: 'Gestão de Saúde', desc: 'Atividades relacionadas com o desenvolvimento, gestão e manutenção de rotinas de saúde e bem-estar, incluindo autogestão.' },
+                    { field: 'descanso_sono', title: 'Descanso e Sono', desc: 'Descansar, preparação para o sono e participação no sono.' },
+                    { field: 'educacao', title: 'Educação', desc: 'Participação na educação formal, na educação informal, necessidades e interesses pessoais em educação informal.' },
+                    { field: 'trabalho', title: 'Trabalho', desc: 'Interesse e busca por emprego, desempenho no trabalho, aposentadoria e voluntariado.' },
+                    { field: 'lazer', title: 'Lazer / Brincar', desc: 'Exploração e participação no lazer.' },
+                    { field: 'participacao_social', title: 'Participação Social', desc: 'Comunidade, família, pares e amigos.' },
+                ];
+                const motoras = ['Força', 'Tônus muscular', 'Amplitude de movimento', 'Frequência Cardíaca', 'Pressão Arterial', 'Saturação de Oxigênio'];
+                const processuais = ['Atenção', 'Concentração', 'Memória', 'Sequenciamento', 'Praxis', 'Resolução de problemas'];
+                const sensoriais = ['Visual', 'Tátil', 'Auditivo', 'Gustativo e olfativo', 'Vestibular', 'Proprioceptivo'];
+                const diasRotina = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+                const horasRotina = ['6h','7h','8h','9h','10h','11h','12h','13h','14h','15h','16h','17h','18h','19h','20h','21h','22h','23h'];
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-6">Anamnese - Terapia Ocupacional</h2>
+                
+                <div class="flex space-x-4 mb-6">
+                    <button id="tab-basica" onclick="showAnamneseSub('basica')" class="px-4 py-2 bg-blue-600 text-white rounded-3xl active:bg-blue-700">Anamnese Básica</button>
+                    <button id="tab-desempenho" onclick="showAnamneseSub('desempenho')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-3xl hover:bg-blue-200">Componentes de Desempenho</button>
+                    <button id="tab-interacao" onclick="showAnamneseSub('interacao')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-3xl hover:bg-blue-200">Interação Social</button>
+                    <button id="tab-papeis" onclick="showAnamneseSub('papeis')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-3xl hover:bg-blue-200">Papéis Ocupacionais</button>
+                    <button id="tab-rotina" onclick="showAnamneseSub('rotina')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-3xl hover:bg-blue-200">Rotina Diária</button>
+                </div>
+                
+                <div id="anamnese-basica">
+                <div class="grid grid-cols-2 gap-8 mb-8">
+                    <div><strong>CPF:</strong><br>${patient.cpf}</div>
+                    <div><strong>Queixa principal:</strong><br>${patient.queixaPrincipal}</div>
+                    <div><strong>História da condição atual:</strong><br>${patient.historiaSaude}</div>
+                    <div class="col-span-2">
+                        <strong>Doenças crônicas:</strong> ${patient.doencasCronicas.join(', ')}
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-semibold mb-6">Ficha de Avaliação Terapêutica Ocupacional</h3>
+                <div class="space-y-6" id="avaliacao-areas">
+                    ${areas.map(area => `
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <label class="text-sm font-semibold text-blue-700 block mb-1">${area.title}</label>
+                        <p class="text-xs text-blue-500 mb-2 italic">${area.desc}</p>
+                        <textarea id="${area.field}" rows="3" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Descreva sobre ${area.title.toLowerCase()}...">${patient[area.field] || ''}</textarea>
+                    </div>
+                    `).join('')}
+                </div>
+                
+                </div>
+                
+                <div id="anamnese-desempenho" class="hidden">
+                    <h3 class="text-xl font-semibold mb-6">Componentes de Desempenho</h3>
+                    
+                    <div class="bg-blue-50 rounded-xl p-4 mb-6">
+                        <h4 class="font-semibold text-blue-700 mb-4">Habilidades Motoras</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${motoras.map(item => `
+                            <div>
+                                <label class="text-xs text-blue-500 block mb-1">${item}</label>
+                                <textarea id="motoras_${item.replace(/ /g, '_')}" rows="2" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400 text-sm" placeholder="${item}...">${patient.habilidades_motoras ? (patient.habilidades_motoras['motoras_' + item] || '') : ''}</textarea>
+                            </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-xl p-4 mb-6">
+                        <h4 class="font-semibold text-blue-700 mb-4">Habilidades Processuais</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${processuais.map(item => `
+                            <div>
+                                <label class="text-xs text-blue-500 block mb-1">${item}</label>
+                                <textarea id="processuais_${item.replace(/ /g, '_')}" rows="2" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400 text-sm" placeholder="${item}...">${patient.habilidades_processuais ? (patient.habilidades_processuais['processuais_' + item] || '') : ''}</textarea>
+                            </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <h4 class="font-semibold text-blue-700 mb-4">Funções Sensoriais</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${sensoriais.map(item => `
+                            <div>
+                                <label class="text-xs text-blue-500 block mb-1">${item}</label>
+                                <textarea id="sensoriais_${item.replace(/ /g, '_')}" rows="2" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400 text-sm" placeholder="${item}...">${patient.funcoes_sensoriais ? (patient.funcoes_sensoriais['sensoriais_' + item] || '') : ''}</textarea>
+                            </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="anamnese-interacao" class="hidden">
+                    <h3 class="text-xl font-semibold mb-6">Habilidades de Interação Social</h3>
+                    
+                    <div class="space-y-4">
+                        ${['Fala fluente', 'Contato visual', 'Comunicação', 'Discurso'].map(campo => `
+                        <div class="bg-blue-50 rounded-xl p-4">
+                            <label class="text-sm font-semibold text-blue-700 block mb-1">${campo}</label>
+                            <textarea id="interacao_${campo.replace(/ /g, '_')}" rows="2" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Descreva ${campo.toLowerCase()}...">${patient.habilidades_interacao_social ? (patient.habilidades_interacao_social[campo] || '') : ''}</textarea>
+                        </div>
+                        `).join('')}
+                        <div class="bg-blue-50 rounded-xl p-4">
+                            <label class="text-sm font-semibold text-blue-700 block mb-1">Observações complementares</label>
+                            <textarea id="observacoes_complementares" rows="4" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Observações complementares...">${patient.observacoes_complementares || ''}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="anamnese-papeis" class="hidden">
+                    <h3 class="text-xl font-semibold mb-6">Avaliação - Papéis Ocupacionais</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="bg-blue-100">
+                                    <th class="border border-blue-200 p-3 text-left w-48">Papel</th>
+                                    <th class="border border-blue-200 p-3 text-center text-xs">O que realizava? (Passado)</th>
+                                    <th class="border border-blue-200 p-3 text-center text-xs">O que realiza hoje? (Presente)</th>
+                                    <th class="border border-blue-200 p-3 text-center text-xs">O que gostaria de realizar? (Futuro)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${['Estudante', 'Trabalhador', 'Cuidador(a)', 'Amigo(a)', 'Participante de lazer', 'Voluntário(a)', 'Membro da família', 'Religioso(a) / Praticante de fé', 'Membro da comunidade', 'Pessoa que vive só', 'Ativista / Militante', 'Aposentado', 'Artista / Criativo(a)', 'Outro'].map(papel => `
+                                <tr>
+                                    <td class="border border-blue-200 p-3 font-medium bg-blue-50 text-xs">${papel}</td>
+                                    <td class="border border-blue-200 p-3"><input type="text" id="papeis_${papel.replace(/[^a-zA-Z0-9]/g, '_')}_passado" value="${patient.papeis_ocupacionais ? (patient.papeis_ocupacionais[`${papel}_passado`] || '') : ''}" class="w-full border border-blue-200 rounded px-2 py-2 text-xs focus:outline-none focus:border-blue-400"></td>
+                                    <td class="border border-blue-200 p-3"><input type="text" id="papeis_${papel.replace(/[^a-zA-Z0-9]/g, '_')}_presente" value="${patient.papeis_ocupacionais ? (patient.papeis_ocupacionais[`${papel}_presente`] || '') : ''}" class="w-full border border-blue-200 rounded px-2 py-2 text-xs focus:outline-none focus:border-blue-400"></td>
+                                    <td class="border border-blue-200 p-3"><input type="text" id="papeis_${papel.replace(/[^a-zA-Z0-9]/g, '_')}_futuro" value="${patient.papeis_ocupacionais ? (patient.papeis_ocupacionais[`${papel}_futuro`] || '') : ''}" class="w-full border border-blue-200 rounded px-2 py-2 text-xs focus:outline-none focus:border-blue-400"></td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="anamnese-rotina" class="hidden">
+                    <h3 class="text-xl font-semibold mb-6">Avaliação - Rotina Diária</h3>
+                    <p class="text-sm text-blue-500 mb-4">Preencha os horários de rotina para cada dia da semana.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs border-collapse min-w-[700px]">
+                            <thead>
+                                <tr class="bg-blue-100">
+                                    <th class="border border-blue-200 p-3 text-left">Hora</th>
+                                    ${diasRotina.map(dia => `<th class="border border-blue-200 p-3 text-center">${dia}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${horasRotina.map(hora => `
+                                <tr class="hover:bg-blue-50">
+                                    <td class="border border-blue-200 p-2 font-medium bg-blue-50 text-xs">${hora}</td>
+                                    ${diasRotina.map(dia => `
+                                    <td class="border border-blue-200 p-1"><input type="text" id="rotina_${hora.replace(/[^a-zA-Z0-9]/g, '_')}_${dia.replace(/[^a-zA-Z0-9]/g, '_')}" value="${patient.rotina_diaria ? (patient.rotina_diaria[`${hora}_${dia}`] || '') : ''}" class="w-full border border-blue-200 rounded px-2 py-2 text-xs focus:outline-none focus:border-blue-400"></td>
+                                    `).join('')}
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mt-8">
+                    <button onclick="saveAnamnese()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Avaliação</button>
+                    <button onclick="resetAnamnese()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Novo Registro</button>
+                </div>`
+            } 
+            else if (section === 'plano') {
+                const plano = patient.plano_terapeutico || {}
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-6">Plano Terapêutico Ocupacional</h2>
+                <div class="space-y-6">
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <label class="text-sm font-semibold text-blue-700 block mb-1">Diagnóstico Terapêutico Ocupacional</label>
+                        <p class="text-xs text-blue-500 mb-3 italic">Análise da funcionalidade ocupacional e limitações identificadas</p>
+                        <textarea id="plano_diagnostico" rows="4" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Descreva o diagnóstico terapêutico ocupacional...">${plano.plano_diagnostico || ''}</textarea>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <label class="text-sm font-semibold text-blue-700 block mb-1">Objetivos Terapêutico Ocupacional</label>
+                        <p class="text-xs text-blue-500 mb-3 italic">Objetivos gerais da intervenção terapêutica ocupacional</p>
+                        <textarea id="plano_objetivos" rows="4" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Descreva os objetivos terapêuticos...">${plano.plano_objetivos || ''}</textarea>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <label class="text-sm font-semibold text-blue-700 block mb-1">Metas Terapêutico Ocupacional</label>
+                        <p class="text-xs text-blue-500 mb-3 italic">Metas específicas e mensuráveis a serem alcançadas</p>
+                        <textarea id="plano_metas" rows="4" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Descreva as metas terapêuticas...">${plano.plano_metas || ''}</textarea>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <label class="text-sm font-semibold text-blue-700 block mb-1">Metodologia de Trabalho</label>
+                        <p class="text-xs text-blue-500 mb-3 italic">Estratégias, técnicas e recursos a serem utilizados</p>
+                        <textarea id="plano_metodologia" rows="4" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Descreva a metodologia de trabalho...">${plano.plano_metodologia || ''}</textarea>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <label class="text-sm font-semibold text-blue-700 block mb-1">Frequência e Planejamento das Sessões</label>
+                        <p class="text-xs text-blue-500 mb-3 italic">Frequência de atendimento, duração e estrutura das sessões</p>
+                        <textarea id="plano_frequencia" rows="4" class="w-full border border-blue-200 rounded-3xl px-6 py-4 focus:outline-none focus:border-blue-400" placeholder="Descreva a frequência e planejamento...">${plano.plano_frequencia || ''}</textarea>
+                    </div>
+                </div>
+                <div class="flex gap-4 mt-8">
+                    <button onclick="savePlanoTerapeutico()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Plano</button>
+                    <button onclick="resetPlano()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Novo Registro</button>
+                </div>`
+            }
+            if (section === 'anamnese') showAnamneseSub('basica');
+            else if (section === 'katz') {
+                const k = patient.prontuario.katz
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-2">Escala de Katz (1963)</h2>
+                <p class="text-blue-500 mb-8">Atividades Básicas de Vida Diária</p>
+                <table class="w-full border-collapse">
+                    <tr class="border-b"><td class="py-4 font-medium">1. Banho</td><td class="text-right"><input type="checkbox" ${k.banheiro?'checked':''} onchange="updateKatz(${currentPatientId})" class="katz-check"> Sim</td></tr>
+                    <tr class="border-b"><td class="py-4 font-medium">2. Vestir-se</td><td class="text-right"><input type="checkbox" ${k.vestir?'checked':''} onchange="updateKatz(${currentPatientId})" class="katz-check"> Sim</td></tr>
+                    <tr class="border-b"><td class="py-4 font-medium">3. Higiene pessoal</td><td class="text-right"><input type="checkbox" ${k.higiene?'checked':''} onchange="updateKatz(${currentPatientId})" class="katz-check"> Sim</td></tr>
+                    <tr class="border-b"><td class="py-4 font-medium">4. Transferência</td><td class="text-right"><input type="checkbox" ${k.transferencia?'checked':''} onchange="updateKatz(${currentPatientId})" class="katz-check"> Sim</td></tr>
+                    <tr class="border-b"><td class="py-4 font-medium">5. Continência</td><td class="text-right"><input type="checkbox" ${k.continencia?'checked':''} onchange="updateKatz(${currentPatientId})" class="katz-check"> Sim</td></tr>
+                    <tr><td class="py-4 font-medium">6. Alimentação</td><td class="text-right"><input type="checkbox" ${k.alimentacao?'checked':''} onchange="updateKatz(${currentPatientId})" class="katz-check"> Sim</td></tr>
+                </table>
+                <div class="mt-8 flex items-baseline gap-4 mb-8">
+                    <div class="text-6xl font-bold scale-result" id="katz-total">${k.total}</div>
+                    <div>
+                        <p class="text-sm uppercase tracking-widest">Total</p>
+                        <p class="text-blue-600">Independência: ${k.total === 6 ? 'Completa' : k.total >= 4 ? 'Parcial' : 'Importante'}</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="saveKatz()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Avaliação</button>
+                    <button onclick="resetKatz()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Novo Registro</button>
+                </div>`
+            } 
+            else if (section === 'gds') {
+                const g = patient.prontuario.gds
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-6">Escala de Depressão Geriátrica (GDS-15)</h2>
+                <div class="space-y-4 max-h-[420px] overflow-auto pr-4" id="gds-questions">
+                    ${[
+                        "Você está satisfeito com sua vida?", "Você se aborrece com frequência?", "Você se sente um inútil?", 
+                        "Você prefere ficar em casa?", "Você sente que sua situação não tem saída?", 
+                        "Você tem medo que algum mal vá lhe acontecer?", "Você acha que sua situação é sem esperanças?", 
+                        "Você acha maravilhoso estar vivo?", "Você sente que sua vida está vazia?", 
+                        "Você sente que a maioria das pessoas está melhor que você?", "Você se sente com mais problemas de memória?", 
+                        "Você deixou muito de seus interesses?", "Você se sente de bom humor?", "Você se sente cheio de energia?", 
+                        "Você se sente feliz na maior parte do tempo?"
+                    ].map((q,i) => `
+                    <div class="flex justify-between items-center bg-blue-50 px-6 py-4 rounded-3xl">
+                        <span class="text-sm">${q}</span>
+                        <label class="flex items-center gap-2"><input type="checkbox" ${g.respostas[i]?'checked':''} onchange="updateGDS(${currentPatientId}, ${i})" class="gds-check w-5 h-5"> SIM</label>
+                    </div>`).join('')}
+                </div>
+                <div class="mt-8 flex items-center gap-6 mb-8">
+                    <div class="text-6xl font-bold" id="gds-total">${g.total}</div>
+                    <div class="text-sm">Respostas positivas<br><span class="text-rose-500">${g.total >= 6 ? 'Suspeita de depressão' : 'Sem indícios'}</span></div>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="saveGDS()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Avaliação</button>
+                    <button onclick="resetGDS()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Novo Registro</button>
+                </div>`
+            } 
+            else if (section === 'pfeffer') {
+                const pf = patient.prontuario.pfeffer
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-6">Questionário Pfeffer (1982)</h2>
+                <p class="text-xs text-blue-500 mb-4">Pontuação &gt; 5 = Dependente</p>
+                <div class="mb-8">
+                    <div class="grid grid-cols-2 gap-y-6 gap-x-12" id="pfeffer-form">
+                        ${[
+                        "1. Manuseia seu próprio dinheiro?", "2. Compra roupas, comida, coisas para casa?", 
+                        "3. Esquenta água para o café e apaga o fogo?", "4. Prepara uma refeição?", 
+                        "5. Mantém-se em dia com as atualidades?", "6. Presta atenção em programas de TV / jornal?", 
+                        "7. Lembra compromissos e eventos familiares?", "8. Manuseia seus próprios remédios?", 
+                        "9. Passeia pela vizinhança e volta sozinho?", "10. Pode ficar em casa sozinho(a) de forma segura?"
+                    ].map((q,i) => `
+                    <div>
+                        <label class="block text-sm mb-1">${q}</label>
+                        <select onchange="updatePfeffer(${currentPatientId}, ${i})" class="pfeffer-select w-full border border-blue-200 rounded-3xl px-4 py-3">
+                            <option value="0" ${pf['q'+(i+1)]==0?'selected':''}>0 - Normal</option>
+                            <option value="1" ${pf['q'+(i+1)]==1?'selected':''}>1 - Com dificuldade</option>
+                            <option value="2" ${pf['q'+(i+1)]==2?'selected':''}>2 - Necessita ajuda</option>
+                            <option value="3" ${pf['q'+(i+1)]==3?'selected':''}>3 - Não é capaz</option>
+                        </select>
+                    </div>`).join('')}
+                </div>
+                <div class="mt-10 text-6xl font-bold mb-8" id="pfeffer-total">Total: ${pf.total}</div>
+                <div class="flex gap-4">
+                    <button onclick="savePfeffer()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Avaliação</button>
+                    <button onclick="resetPfeffer()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Novo Registro</button>
+                </div>`
+            } 
+            else if (section === 'miniMental') {
+                const mm = patient.prontuario.miniMental
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-6">Mini-Mental (Folstein adaptado por Brucki)</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div><label>Orientação Temporal (5)</label><input type="number" value="${mm.orientacaoTemporal}" max="5" onchange="updateMiniMental(${currentPatientId})" class="mini-input w-20 ml-4 border rounded-2xl px-4 py-2"></div>
+                        <div><label>Orientação Espacial (5)</label><input type="number" value="${mm.orientacaoEspacial}" max="5" onchange="updateMiniMental(${currentPatientId})" class="mini-input w-20 ml-4 border rounded-2xl px-4 py-2"></div>
+                        <div><label>Registro (3)</label><input type="number" value="${mm.registro}" max="3" onchange="updateMiniMental(${currentPatientId})" class="mini-input w-20 ml-4 border rounded-2xl px-4 py-2"></div>
+                        <div><label>Atenção e Cálculo (5)</label><input type="number" value="${mm.atencao}" max="5" onchange="updateMiniMental(${currentPatientId})" class="mini-input w-20 ml-4 border rounded-2xl px-4 py-2"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div><label>Memória de Evocação (3)</label><input type="number" value="${mm.evocacao}" max="3" onchange="updateMiniMental(${currentPatientId})" class="mini-input w-20 ml-4 border rounded-2xl px-4 py-2"></div>
+                        <div><label>Nomear + Repetir + Comando + Frase + Ler + Copiar</label><input type="number" value="${mm.nomear+mm.repetir+mm.comando+mm.frase+mm.ler+mm.copiar}" max="9" onchange="updateMiniMental(${currentPatientId})" class="mini-input w-20 ml-4 border rounded-2xl px-4 py-2"></div>
+                    </div>
+                </div>
+                <div class="mt-8 text-6xl font-bold mb-8" id="mini-total">Pontuação: ${mm.total}/30</div>
+                <div class="flex gap-4">
+                    <button onclick="saveMiniMental()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Avaliação</button>
+                    <button onclick="resetMiniMental()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Novo Registro</button>
+                </div>`
+            } 
+            else if (section === 'evolucao') {
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-6">Evolução Diária</h2>
+                <div id="evolucoes-list" class="space-y-6 mb-8"></div>
+                <textarea id="nova-evolucao" rows="3" class="w-full border border-blue-200 rounded-3xl px-6 py-4 mb-4" placeholder="Descreva a evolução da sessão de hoje..."></textarea>
+                <div class="flex gap-4 mb-8">
+                    <button onclick="addEvolucao()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Adicionar Evolução</button>
+                    <button onclick="saveEvolucoes()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Histórico</button>
+                    <button onclick="resetEvolucoes()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Limpar Histórico</button>
+                </div>`
+                renderEvolucoes()
+            }
+            else if (section === 'prescricao') {
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-8">Prescrição Terapêutica + Foto do Paciente</h2>
+                <div class="flex gap-4 mb-8">
+                    <button onclick="savePrescricao()" class="bg-blue-600 text-white px-8 py-3 rounded-3xl font-medium">Salvar Prescrição</button>
+                    <button onclick="resetPrescricao()" class="bg-blue-400 text-white px-8 py-3 rounded-3xl font-medium">Novo Registro</button>
+                </div>
+                <div class="flex gap-8">
+                    <div class="flex-1">
+                        <textarea id="prescricao-obs" class="w-full h-64 border border-blue-200 rounded-3xl p-6">${patient.prontuario.prescricao.observacoes}</textarea>
+                        <button onclick="savePrescricao()" class="mt-4 bg-blue-600 text-white px-8 py-3 rounded-3xl">Salvar Prescrição</button>
+                    </div>
+                    <div onclick="showPhotoModal()" class="w-64 h-64 bg-blue-100 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:scale-105">
+                        ${patient.prontuario.prescricao.fotoBase64 ? `<img src="${patient.prontuario.prescricao.fotoBase64}" class="w-full h-full object-cover rounded-3xl">` : `
+                        <i class="fa-solid fa-camera text-7xl text-blue-300 mb-4"></i>
+                        <p class="font-medium">Adicionar / Atualizar Foto</p>`}
+                    </div>
+                </div>`
+            }
+            else if (section === 'historico') {
+                content.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-8">Histórico Completo do Paciente</h2>
+                
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-6 mb-8 border border-blue-200">
+                    <h3 class="text-xl font-semibold mb-4 text-blue-900">📋 Documentos Salvos</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-white rounded-xl p-4 border border-blue-100 hover:shadow-lg transition">
+                            <p class="font-semibold text-blue-700 mb-2">📝 Anamnese Completa</p>
+                            <button onclick="printDocument('anamnese')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Imprimir</button>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-blue-100 hover:shadow-lg transition">
+                            <p class="font-semibold text-blue-700 mb-2">📊 Escalas Avaliativas</p>
+                            <button onclick="printDocument('escalas')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Imprimir</button>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-blue-100 hover:shadow-lg transition">
+                            <p class="font-semibold text-blue-700 mb-2">🎯 Plano Terapêutico</p>
+                            <button onclick="printDocument('plano')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Imprimir</button>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-blue-100 hover:shadow-lg transition">
+                            <p class="font-semibold text-blue-700 mb-2">📈 Evolução Clínica</p>
+                            <button onclick="printDocument('evolucao')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Imprimir</button>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-blue-100 hover:shadow-lg transition">
+                            <p class="font-semibold text-blue-700 mb-2">💊 Prescrição</p>
+                            <button onclick="printDocument('prescricao')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Imprimir</button>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-blue-100 hover:shadow-lg transition">
+                            <p class="font-semibold text-blue-700 mb-2">📄 Relatório Completo</p>
+                            <button onclick="printDocument('completo')" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">🖨️ Imprimir Tudo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 mb-8 border border-blue-200">
+                    <h3 class="text-xl font-semibold mb-4">👤 Dados Pessoais</h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>Nome:</strong> ${patient.nome}</div>
+                        <div><strong>CPF:</strong> ${patient.cpf}</div>
+                        <div><strong>Data de Nascimento:</strong> ${new Date(patient.dataNascimento).toLocaleDateString('pt-BR')}</div>
+                        <div><strong>Idade:</strong> ${patient.idade} anos</div>
+                        <div><strong>Sexo:</strong> ${patient.sexo}</div>
+                        <div><strong>Estado Civil:</strong> ${patient.estadoCivil}</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 mb-8 border border-blue-200">
+                    <h3 class="text-xl font-semibold mb-4">📊 Resumo das Avaliações</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <span><strong>Escala de Katz:</strong></span>
+                            <span class="font-semibold text-blue-700">${patient.prontuario.katz.total}/6</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <span><strong>GDS-15:</strong></span>
+                            <span class="font-semibold text-blue-700">${patient.prontuario.gds.total}/15</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <span><strong>Escala de Pfeffer:</strong></span>
+                            <span class="font-semibold text-green-700">${patient.prontuario.pfeffer.total}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                            <span><strong>Mini-Mental:</strong></span>
+                            <span class="font-semibold text-orange-700">${patient.prontuario.miniMental.total}/30</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 border border-blue-200">
+                    <h3 class="text-xl font-semibold mb-4">📅 Últimos Registros</h3>
+                    <div class="space-y-3 text-sm">
+                        ${patient.prontuario.evolucoes.length > 0 ? `
+                            ${patient.prontuario.evolucoes.slice(-3).reverse().map(ev => `
+                            <div class="border-l-4 border-blue-400 pl-4 py-2">
+                                <p class="font-semibold text-blue-700">${ev.data}</p>
+                                <p class="text-gray-700">${ev.texto.substring(0, 100)}...</p>
+                            </div>
+                            `).join('')}
+                        ` : '<p class="text-gray-500">Sem registros de evolução</p>'}
+                    </div>
+                </div>`
+            }
+        }
+
+        // Funções de atualização em tempo real
+        function updateKatz(id) {
+            const patient = patients.find(p => p.id === id)
+            const checks = document.querySelectorAll('.katz-check')
+            patient.prontuario.katz.banheiro = checks[0].checked
+            patient.prontuario.katz.vestir = checks[1].checked
+            patient.prontuario.katz.higiene = checks[2].checked
+            patient.prontuario.katz.transferencia = checks[3].checked
+            patient.prontuario.katz.continencia = checks[4].checked
+            patient.prontuario.katz.alimentacao = checks[5].checked
+            patient.prontuario.katz.total = Array.from(checks).filter(c => c.checked).length
+            document.getElementById('katz-total').innerHTML = patient.prontuario.katz.total
+            savePatients()
+        }
+
+        function updateGDS(id, index) {
+            const patient = patients.find(p => p.id === id)
+            const checks = document.querySelectorAll('.gds-check')
+            patient.prontuario.gds.respostas[index] = checks[index].checked
+            patient.prontuario.gds.total = Array.from(checks).filter(c => c.checked).length
+            document.getElementById('gds-total').innerHTML = patient.prontuario.gds.total
+            savePatients()
+        }
+
+        function updatePfeffer(id, qIndex) {
+            const patient = patients.find(p => p.id === id)
+            const selects = document.querySelectorAll('.pfeffer-select')
+            patient.prontuario.pfeffer['q' + (qIndex + 1)] = parseInt(selects[qIndex].value)
+            patient.prontuario.pfeffer.total = Array.from(selects).reduce((acc, s) => acc + parseInt(s.value), 0)
+            document.getElementById('pfeffer-total').innerHTML = `Total: ${patient.prontuario.pfeffer.total}`
+            savePatients()
+        }
+
+        function updateMiniMental(id) {
+            const patient = patients.find(p => p.id === id)
+            const inputs = document.querySelectorAll('.mini-input')
+            patient.prontuario.miniMental.orientacaoTemporal = parseInt(inputs[0].value) || 0
+            patient.prontuario.miniMental.orientacaoEspacial = parseInt(inputs[1].value) || 0
+            patient.prontuario.miniMental.registro = parseInt(inputs[2].value) || 0
+            patient.prontuario.miniMental.atencao = parseInt(inputs[3].value) || 0
+            patient.prontuario.miniMental.evocacao = parseInt(inputs[4].value) || 0
+            // Simplificado: o último input representa o restante
+            patient.prontuario.miniMental.total = parseInt(document.getElementById('mini-total').innerHTML.split(':')[1]) || 30
+            savePatients()
+        }
+
+        function saveKatz() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            savePatients()
+            alert('✅ Avaliação Katz salva com sucesso!')
+        }
+
+        function resetKatz() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.katz = { banheiro: false, vestir: false, higiene: false, transferencia: false, continencia: false, alimentacao: false, total: 0 }
+            savePatients()
+            loadProntuarioSection('katz')
+            alert('✅ Novo registro Katz criado!')
+        }
+
+        function saveGDS() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            savePatients()
+            alert('✅ Avaliação GDS-15 salva com sucesso!')
+        }
+
+        function resetGDS() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.gds = { respostas: Array(15).fill(false), total: 0 }
+            savePatients()
+            loadProntuarioSection('gds')
+            alert('✅ Novo registro GDS-15 criado!')
+        }
+
+        function savePfeffer() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            savePatients()
+            alert('✅ Avaliação Pfeffer salva com sucesso!')
+        }
+
+        function resetPfeffer() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.pfeffer = { q1:0,q2:0,q3:0,q4:0,q5:0,q6:0,q7:0,q8:0,q9:0,q10:0, total: 0 }
+            savePatients()
+            loadProntuarioSection('pfeffer')
+            alert('✅ Novo registro Pfeffer criado!')
+        }
+
+        function saveMiniMental() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            savePatients()
+            alert('✅ Avaliação Mini-Mental salva com sucesso!')
+        }
+
+        function resetMiniMental() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.miniMental = { orientacaoTemporal:0, orientacaoEspacial:0, registro:0, atencao:0, evocacao:0, nomear:0, repetir:0, comando:0, frase:0, ler:0, copiar:0, total:0 }
+            savePatients()
+            loadProntuarioSection('miniMental')
+            alert('✅ Novo registro Mini-Mental criado!')
+        }
+
+        function renderEvolucoes() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            const container = document.getElementById('evolucoes-list')
+            container.innerHTML = patient.prontuario.evolucoes.map(ev => `
+            <div class="border-l-4 border-blue-400 pl-6">
+                <div class="text-xs text-blue-400">${ev.data}</div>
+                <p>${ev.texto}</p>
+            </div>`).join('')
+        }
+
+        function addEvolucao() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            const texto = document.getElementById('nova-evolucao').value
+            if (!texto) return
+            patient.prontuario.evolucoes.unshift({
+                data: new Date().toLocaleDateString('pt-BR'),
+                texto: texto
+            })
+            savePatients()
+            renderEvolucoes()
+            document.getElementById('nova-evolucao').value = ''
+        }
+
+        function saveEvolucoes() {
+            savePatients()
+            alert('✅ Histórico de evolução salvo com sucesso!')
+        }
+
+        function resetEvolucoes() {
+            if (!confirm('Tem certeza que deseja limpar todo o histórico de evolução? Esta ação não pode ser desfeita.')) return
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.evolucoes = []
+            savePatients()
+            renderEvolucoes()
+            alert('✅ Histórico de evolução limpo!')
+        }
+
+        // ==================== FUNÇÕES DE IMPRESSÃO ====================
+        function printDocument(type) {
+            const patient = patients.find(p => p.id === currentPatientId)
+            if (!patient) {
+                alert('Paciente não selecionado')
+                return
+            }
+
+            let htmlContent = `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 30px; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #8b5cf6; padding-bottom: 20px; }
+                        .header h1 { margin: 0; font-size: 22px; color: #8b5cf6; }
+                        .header p { margin: 5px 0; font-size: 12px; }
+                        .section { margin-bottom: 25px; }
+                        .section h2 { color: #8b5cf6; border-bottom: 1px solid #e9d5ff; padding-bottom: 8px; font-size: 16px; }
+                        .section h3 { color: #6d28d9; font-size: 14px; margin-top: 15px; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                        th { background-color: #f3e8ff; }
+                        .valor { font-weight: bold; color: #8b5cf6; }
+                        .evolucao-item { margin: 10px 0; padding: 10px; border-left: 3px solid #8b5cf6; background-color: #f9f5ff; }
+                        .footer { text-align: center; margin-top: 40px; font-size: 11px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Jackline Pinheiro - Terapeuta Ocupacional</h1>
+                        <p>Especialista em Gerontologia | Crefito 2: 21402TO</p>
+                    </div>
+            `
+
+            // Conteúdo específico por tipo
+            if (type === 'anamnese' || type === 'completo') {
+                htmlContent += `
+                    <div class="section">
+                        <h2>📋 Anamnese Completa - Terapia Ocupacional</h2>
+                        <table>
+                            <tr><td><strong>Nome:</strong></td><td>${patient.nome}</td></tr>
+                            <tr><td><strong>CPF:</strong></td><td>${patient.cpf}</td></tr>
+                            <tr><td><strong>Data Nasc.:</strong></td><td>${new Date(patient.dataNascimento).toLocaleDateString('pt-BR')}</td></tr>
+                            <tr><td><strong>Idade:</strong></td><td>${patient.idade} anos</td></tr>
+                            <tr><td><strong>Sexo:</strong></td><td>${patient.sexo}</td></tr>
+                        </table>
+                        <h3>Áreas de Ocupação</h3>
+                        <table>
+                            <tr><td><strong>Atividades de Vida Diária (AVD):</strong></td><td>${patient.avaliacao_avd || '-'}</td></tr>
+                            <tr><td><strong>Atividades Instrumentais (AIVD):</strong></td><td>${patient.avaliacao_aivd || '-'}</td></tr>
+                            <tr><td><strong>Gestão de Saúde:</strong></td><td>${patient.gestao_saude || '-'}</td></tr>
+                            <tr><td><strong>Descanso e Sono:</strong></td><td>${patient.descanso_sono || '-'}</td></tr>
+                            <tr><td><strong>Educação:</strong></td><td>${patient.educacao || '-'}</td></tr>
+                            <tr><td><strong>Trabalho:</strong></td><td>${patient.trabalho || '-'}</td></tr>
+                            <tr><td><strong>Lazer:</strong></td><td>${patient.lazer || '-'}</td></tr>
+                            <tr><td><strong>Participação Social:</strong></td><td>${patient.participacao_social || '-'}</td></tr>
+                        </table>
+                    </div>
+                `
+            }
+
+            if (type === 'escalas' || type === 'completo') {
+                htmlContent += `
+                    <div class="section">
+                        <h2>📊 Escalas Avaliativas</h2>
+                        <table>
+                            <tr>
+                                <th style="width: 40%">Avaliação</th>
+                                <th style="width: 30%">Resultado</th>
+                                <th style="width: 30%">Interpretação</th>
+                            </tr>
+                            <tr>
+                                <td><strong>Escala de Katz (ABVD)</strong></td>
+                                <td class="valor">${patient.prontuario.katz.total}/6</td>
+                                <td>${patient.prontuario.katz.total === 6 ? 'Independência Completa' : patient.prontuario.katz.total >= 4 ? 'Independência Parcial' : 'Dependência'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>GDS-15 (Depressão)</strong></td>
+                                <td class="valor">${patient.prontuario.gds.total}/15</td>
+                                <td>${patient.prontuario.gds.total >= 6 ? 'Suspeita de Depressão' : 'Sem Indícios'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Escala de Pfeffer (AIVD)</strong></td>
+                                <td class="valor">${patient.prontuario.pfeffer.total}</td>
+                                <td>Score ${patient.prontuario.pfeffer.total}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mini-Mental State</strong></td>
+                                <td class="valor">${patient.prontuario.miniMental.total}/30</td>
+                                <td>Score ${patient.prontuario.miniMental.total}</td>
+                            </tr>
+                        </table>
+                    </div>
+                `
+            }
+
+            if (type === 'plano' || type === 'completo') {
+                htmlContent += `
+                    <div class="section">
+                        <h2>🎯 Plano Terapêutico Ocupacional</h2>
+                        <table>
+                            <tr><td><strong>Diagnóstico:</strong></td><td>${patient.plano_terapeutico?.plano_diagnostico || '-'}</td></tr>
+                            <tr><td><strong>Objetivos:</strong></td><td>${patient.plano_terapeutico?.plano_objetivos || '-'}</td></tr>
+                            <tr><td><strong>Metas:</strong></td><td>${patient.plano_terapeutico?.plano_metas || '-'}</td></tr>
+                            <tr><td><strong>Metodologia:</strong></td><td>${patient.plano_terapeutico?.plano_metodologia || '-'}</td></tr>
+                            <tr><td><strong>Frequência:</strong></td><td>${patient.plano_terapeutico?.plano_frequencia || '-'}</td></tr>
+                        </table>
+                    </div>
+                `
+            }
+
+            if (type === 'evolucao' || type === 'completo') {
+                htmlContent += `
+                    <div class="section">
+                        <h2>📈 Evolução Clínica</h2>
+                        ${patient.prontuario.evolucoes.length > 0 ? patient.prontuario.evolucoes.map(ev => `
+                            <div class="evolucao-item">
+                                <strong>Data:</strong> ${ev.data}<br>
+                                <strong>Nota:</strong> ${ev.texto}
+                            </div>
+                        `).join('') : '<p>Sem registros de evolução.</p>'}
+                    </div>
+                `
+            }
+
+            if (type === 'prescricao' || type === 'completo') {
+                htmlContent += `
+                    <div class="section">
+                        <h2>💊 Prescrição Terapêutica</h2>
+                        <div style="background-color: #f9f5ff; padding: 15px; border-left: 3px solid #8b5cf6; border-radius: 5px;">
+                            ${patient.prontuario.prescricao.observacoes || '<p>Sem prescrições registradas.</p>'}
+                        </div>
+                    </div>
+                `
+            }
+
+            htmlContent += `
+                    <div class="footer">
+                        <p><strong>Data de Impressão:</strong> ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                        <p>PRONTTO - Sistema de Prontuário Eletrônico</p>
+                    </div>
+                </body>
+                </html>
+            `
+
+            // Abre em nova janela para impressão
+            const newWindow = window.open('', '', 'width=900,height=700')
+            newWindow.document.write(htmlContent)
+            newWindow.document.close()
+            
+            setTimeout(() => {
+                newWindow.print()
+            }, 500)
+        }
+
+        function showAnamneseSub(sub) {
+            document.getElementById('anamnese-basica').classList.toggle('hidden', sub !== 'basica')
+            document.getElementById('anamnese-desempenho').classList.toggle('hidden', sub !== 'desempenho')
+            document.getElementById('anamnese-interacao').classList.toggle('hidden', sub !== 'interacao')
+            document.getElementById('anamnese-papeis').classList.toggle('hidden', sub !== 'papeis')
+            document.getElementById('anamnese-rotina').classList.toggle('hidden', sub !== 'rotina')
+            document.getElementById('tab-basica').className = sub === 'basica' ? 'px-6 py-3 bg-blue-600 text-white rounded-3xl font-medium' : 'px-6 py-3 bg-blue-100 text-blue-700 rounded-3xl font-medium'
+            document.getElementById('tab-desempenho').className = sub === 'desempenho' ? 'px-6 py-3 bg-blue-600 text-white rounded-3xl font-medium' : 'px-6 py-3 bg-blue-100 text-blue-700 rounded-3xl font-medium'
+            document.getElementById('tab-interacao').className = sub === 'interacao' ? 'px-6 py-3 bg-blue-600 text-white rounded-3xl font-medium' : 'px-6 py-3 bg-blue-100 text-blue-700 rounded-3xl font-medium'
+            document.getElementById('tab-papeis').className = sub === 'papeis' ? 'px-6 py-3 bg-blue-600 text-white rounded-3xl font-medium' : 'px-6 py-3 bg-blue-100 text-blue-700 rounded-3xl font-medium'
+            document.getElementById('tab-rotina').className = sub === 'rotina' ? 'px-6 py-3 bg-blue-600 text-white rounded-3xl font-medium' : 'px-6 py-3 bg-blue-100 text-blue-700 rounded-3xl font-medium'
+        }
+
+        function saveAnamnese() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            if (!patient) return
+
+            // Salvar áreas básicas
+            const areas = [
+                'avaliacao_avd', 'avaliacao_aivd', 'gestao_saude', 'descanso_sono',
+                'educacao', 'trabalho', 'lazer', 'participacao_social'
+            ]
+            areas.forEach(field => {
+                patient[field] = document.getElementById(field).value
+            })
+
+            // Salvar componentes de desempenho
+            const motoras = ['Força', 'Tônus muscular', 'Amplitude de movimento', 'Frequência Cardíaca', 'Pressão Arterial', 'Saturação de Oxigênio']
+            const processuais = ['Atenção', 'Concentração', 'Memória', 'Sequenciamento', 'Praxis', 'Resolução de problemas']
+            const sensoriais = ['Visual', 'Tátil', 'Auditivo', 'Gustativo e olfativo', 'Vestibular', 'Proprioceptivo']
+
+            if (!patient.habilidades_motoras) patient.habilidades_motoras = {}
+            motoras.forEach(item => {
+                patient.habilidades_motoras['motoras_' + item] = document.getElementById('motoras_' + item.replace(/ /g, '_')).value
+            })
+
+            if (!patient.habilidades_processuais) patient.habilidades_processuais = {}
+            processuais.forEach(item => {
+                patient.habilidades_processuais['processuais_' + item] = document.getElementById('processuais_' + item.replace(/ /g, '_')).value
+            })
+
+            if (!patient.funcoes_sensoriais) patient.funcoes_sensoriais = {}
+            sensoriais.forEach(item => {
+                patient.funcoes_sensoriais['sensoriais_' + item] = document.getElementById('sensoriais_' + item.replace(/ /g, '_')).value
+            })
+
+            // Salvar habilidades de interação social
+            const camposInteracao = ['Fala fluente', 'Contato visual', 'Comunicação', 'Discurso']
+            if (!patient.habilidades_interacao_social) patient.habilidades_interacao_social = {}
+            camposInteracao.forEach(campo => {
+                patient.habilidades_interacao_social[campo] = document.getElementById('interacao_' + campo.replace(/ /g, '_')).value
+            })
+            patient.observacoes_complementares = document.getElementById('observacoes_complementares').value
+
+            // Salvar papéis ocupacionais
+            const papeisList = ['Estudante', 'Trabalhador', 'Cuidador(a)', 'Amigo(a)', 'Participante de lazer', 'Voluntário(a)', 'Membro da família', 'Religioso(a) / Praticante de fé', 'Membro da comunidade', 'Pessoa que vive só', 'Ativista / Militante', 'Aposentado', 'Artista / Criativo(a)', 'Outro']
+            const colunas = ['passado', 'presente', 'futuro']
+            if (!patient.papeis_ocupacionais) patient.papeis_ocupacionais = {}
+            papeisList.forEach(papel => {
+                colunas.forEach(col => {
+                    const key = `${papel}_${col}`
+                    patient.papeis_ocupacionais[key] = document.getElementById(`papeis_${papel.replace(/[^a-zA-Z0-9]/g, '_')}_${col}`).value
+                })
+            })
+
+            // Salvar rotina diária
+            const diasRotina = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+            const horasRotina = ['6h','7h','8h','9h','10h','11h','12h','13h','14h','15h','16h','17h','18h','19h','20h','21h','22h','23h']
+            const sanitize = value => value.replace(/[^a-zA-Z0-9]/g, '_')
+            if (!patient.rotina_diaria) patient.rotina_diaria = {}
+            diasRotina.forEach(dia => {
+                horasRotina.forEach(hora => {
+                    const id = `rotina_${sanitize(hora)}_${sanitize(dia)}`
+                    const el = document.getElementById(id)
+                    patient.rotina_diaria[`${hora}_${dia}`] = el ? el.value : ''
+                })
+            })
+
+            savePatients()
+            alert('✅ Avaliação salva com sucesso!')
+        }
+
+        function savePrescricao() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.prescricao.observacoes = document.getElementById('prescricao-obs').value
+            savePatients()
+            alert('✅ Prescrição salva!')
+        }
+
+        function savePlanoTerapeutico() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            if (!patient.plano_terapeutico) patient.plano_terapeutico = {}
+        function resetAnamnese() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.avaliacao_avd = ""
+            patient.avaliacao_aivd = ""
+            patient.gestao_saude = ""
+            patient.descanso_sono = ""
+            patient.educacao = ""
+            patient.trabalho = ""
+            patient.lazer = ""
+            patient.participacao_social = ""
+            patient.habilidades_motoras = {}
+            patient.habilidades_processuais = {}
+            patient.funcoes_sensoriais = {}
+            patient.habilidades_interacao_social = {}
+            patient.rotina_diaria = {}
+            patient.observacoes_complementares = ""
+            savePatients()
+            loadProntuarioSection('anamnese')
+            alert('✅ Novo registro de Anamnese criado!')
+        }
+
+        function resetPlano() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.plano_terapeutico = {}
+            savePatients()
+            loadProntuarioSection('plano')
+            alert('✅ Novo Plano Terapêutico criado!')
+        }
+
+        function resetPrescricao() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.prescricao.observacoes = ""
+            savePatients()
+            loadProntuarioSection('prescricao')
+            alert('✅ Novo registro de Prescrição criado!')
+        }
+
+            patient.plano_terapeutico.plano_diagnostico = document.getElementById('plano_diagnostico').value
+            patient.plano_terapeutico.plano_objetivos = document.getElementById('plano_objetivos').value
+
+        function resetAnamnese() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.avaliacao_avd = ""
+            patient.avaliacao_aivd = ""
+            patient.gestao_saude = ""
+            patient.descanso_sono = ""
+            patient.educacao = ""
+            patient.trabalho = ""
+            patient.lazer = ""
+            patient.participacao_social = ""
+            patient.habilidades_motoras = {}
+            patient.habilidades_processuais = {}
+            patient.funcoes_sensoriais = {}
+            patient.habilidades_interacao_social = {}
+            patient.rotina_diaria = {}
+            patient.observacoes_complementares = ""
+            savePatients()
+            loadProntuarioSection('anamnese')
+            alert('✅ Novo registro de Anamnese criado!')
+        }
+
+        function resetPlano() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.plano_terapeutico = {}
+            savePatients()
+            loadProntuarioSection('plano')
+            alert('✅ Novo Plano Terapêutico criado!')
+        }
+
+        function resetPrescricao() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.prontuario.prescricao.observacoes = ""
+            savePatients()
+            loadProntuarioSection('prescricao')
+            alert('✅ Novo registro de Prescrição criado!')
+        }
+            patient.plano_terapeutico.plano_metas = document.getElementById('plano_metas').value
+            patient.plano_terapeutico.plano_metodologia = document.getElementById('plano_metodologia').value
+            patient.plano_terapeutico.plano_frequencia = document.getElementById('plano_frequencia').value
+            savePatients()
+            alert('✅ Plano Terapêutico salvo com sucesso!')
+        }
+
+        // ==================== FOTO ====================
+        let tempPhotoBase64 = null
+
+        function showPhotoModal() {
+            document.getElementById('photo-modal').classList.remove('hidden')
+            document.getElementById('photo-modal').classList.add('flex')
+        }
+
+        function hidePhotoModal() {
+            document.getElementById('photo-modal').classList.add('hidden')
+            document.getElementById('photo-modal').classList.remove('flex')
+            tempPhotoBase64 = null
+        }
+
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0]
+            if (!file) return
+            const reader = new FileReader()
+            reader.onload = function(ev) {
+                tempPhotoBase64 = ev.target.result
+                const preview = document.getElementById('photo-preview')
+                preview.innerHTML = `<img src="${tempPhotoBase64}" class="max-h-64 mx-auto rounded-3xl shadow-xl">`
+                preview.classList.remove('hidden')
+            }
+            reader.readAsDataURL(file)
+        }
+
+        function savePhoto() {
+            if (!tempPhotoBase64 || !currentPatientId) return
+            const patient = patients.find(p => p.id === currentPatientId)
+            patient.fotoBase64 = tempPhotoBase64
+            patient.prontuario.prescricao.fotoBase64 = tempPhotoBase64
+            savePatients()
+            hidePhotoModal()
+            // Atualiza visual
+            openPatientProntuarioById(currentPatientId)
+            alert('📸 Foto salva com sucesso!')
+        }
+
+        // ==================== AGENDAMENTOS ====================
+        function renderAgendamentos() {
+            // Função mantida para compatibilidade, mas agora usa a nova renderização
+            renderCalendarAndAppointments()
+        }
+
+        function renderCalendarAndAppointments() {
+            renderAppointmentCalendar()
+            renderDayAppointments()
+        }
+
+        function renderAppointmentCalendar() {
+            const container = document.getElementById('calendar-container')
+            const selectedDate = new Date(selectedAppointmentDate)
+            const currentYear = selectedDate.getFullYear()
+            const currentMonth = selectedDate.getMonth()
+            
+            // Obter datas com agendamentos
+            const appointmentDates = new Set(appointments.map(a => a.date))
+            
+            // Renderizar header do mês
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+            const monthYear = `${monthNames[currentMonth]} ${currentYear}`
+            
+            // Primeiro dia do mês e quantidade de dias
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay()
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+            const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate()
+            
+            let html = `
+                <h3 class="text-lg font-semibold text-blue-700 mb-4 text-center">${monthYear}</h3>
+                <div class="grid grid-cols-7 gap-2 mb-4">
+                    <div class="text-center text-xs font-bold text-blue-600">Dom</div>
+                    <div class="text-center text-xs font-bold text-blue-600">Seg</div>
+                    <div class="text-center text-xs font-bold text-blue-600">Ter</div>
+                    <div class="text-center text-xs font-bold text-blue-600">Qua</div>
+                    <div class="text-center text-xs font-bold text-blue-600">Qui</div>
+                    <div class="text-center text-xs font-bold text-blue-600">Sex</div>
+                    <div class="text-center text-xs font-bold text-blue-600">Sab</div>`
+            
+            // Dias do mês anterior
+            for (let i = firstDay - 1; i >= 0; i--) {
+                html += `<div class="text-center text-xs text-blue-300 py-2">-</div>`
+            }
+            
+            // Dias do mês atual
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                const hasAppointment = appointmentDates.has(dateStr)
+                const isSelected = dateStr === selectedAppointmentDate
+                const isToday = dateStr === new Date().toISOString().split('T')[0]
+                
+                let btnClass = 'py-2 rounded-2xl text-xs font-medium cursor-pointer transition-all'
+                if (isSelected) {
+                    btnClass += ' bg-blue-600 text-white shadow-lg'
+                } else if (hasAppointment) {
+                    btnClass += ' bg-emerald-100 text-emerald-700 border-2 border-emerald-400'
+                } else if (isToday) {
+                    btnClass += ' bg-blue-50 text-blue-700 border-2 border-blue-300'
+                } else {
+                    btnClass += ' text-blue-600 hover:bg-blue-50'
+                }
+                
+                html += `<button onclick="selectAppointmentDate('${dateStr}')" class="${btnClass}">${day}</button>`
+            }
+            
+            // Dias do próximo mês
+            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7
+            for (let day = 1; day <= totalCells - (firstDay + daysInMonth); day++) {
+                html += `<div class="text-center text-xs text-blue-300 py-2">-</div>`
+            }
+            
+            html += `</div>
+                <div class="mt-4 pt-4 border-t border-blue-200">
+                    <h4 class="text-sm font-semibold text-blue-700 mb-2">Legenda:</h4>
+                    <div class="flex items-center gap-2 text-xs mb-2">
+                        <div class="w-3 h-3 bg-emerald-400 rounded"></div>
+                        <span class="text-blue-600">Tem agendamento</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <div class="w-3 h-3 border-2 border-blue-300 rounded"></div>
+                        <span class="text-blue-600">Hoje</span>
+                    </div>
+                </div>`
+            
+            container.innerHTML = html
+        }
+
+        function renderDayAppointments() {
+            const container = document.getElementById('day-appointments-container')
+            const dateInput = document.getElementById('appointment-date-input')
+            const dateLabel = document.getElementById('date-label')
+            
+            // Atualizar input e label
+            dateInput.value = selectedAppointmentDate
+            
+            const selectedDate = new Date(selectedAppointmentDate)
+            const dayNames = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
+            const monthNames = ['de janeiro', 'de fevereiro', 'de março', 'de abril', 'de maio', 'de junho',
+                               'de julho', 'de agosto', 'de setembro', 'de outubro', 'de novembro', 'de dezembro']
+            
+            const dayName = dayNames[selectedDate.getDay()]
+            const monthName = monthNames[selectedDate.getMonth()]
+            const day = selectedDate.getDate()
+            const fullLabel = `${dayName}, ${day} ${monthName} de ${selectedDate.getFullYear()}`
+            dateLabel.textContent = fullLabel
+            
+            // Filtrar agendamentos da data
+            const dayAppointments = appointments.filter(appt => appt.date === selectedAppointmentDate)
+            
+            // Criar legenda dos status
+            let legendaHTML = `
+                <div class="bg-white rounded-3xl p-4 mb-4 border border-violet-200">
+                    <p class="font-semibold text-violet-700 mb-3 text-sm">📋 Legenda de Status:</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                        ${Object.entries(appointmentStatuses).map(([key, val]) => {
+                            const colorMap = {
+                                emerald: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+                                amber: 'bg-amber-100 text-amber-700 border-amber-300',
+                                rose: 'bg-rose-100 text-rose-700 border-rose-300',
+                                red: 'bg-red-100 text-red-700 border-red-300',
+                                slate: 'bg-slate-100 text-slate-700 border-slate-300',
+                                blue: 'bg-blue-100 text-blue-700 border-blue-300'
+                            }
+                            return `<div class="border border-2 ${colorMap[val.color]} rounded-xl px-2 py-1 text-xs font-semibold text-center">${val.label}</div>`
+                        }).join('')}
+                    </div>
+                </div>`
+            
+            // Criar seletor de status rápido (abaixo da legenda)
+            let statusSelectorHTML = `
+                <div class="bg-violet-50 rounded-3xl p-4 mb-6 border border-violet-200">
+                    <p class="font-semibold text-violet-700 mb-2 text-xs">⚡ Filtrar por Status:</p>
+                    <div class="flex flex-wrap gap-1">
+                        ${Object.entries(appointmentStatuses).map(([key, val]) => {
+                            const colorMap = {
+                                emerald: 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700 border-emerald-300',
+                                amber: 'bg-amber-100 hover:bg-amber-200 text-amber-700 border-amber-300',
+                                rose: 'bg-rose-100 hover:bg-rose-200 text-rose-700 border-rose-300',
+                                red: 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300',
+                                slate: 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300',
+                                blue: 'bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300'
+                            }
+                            return `<button onclick="filterAppointmentsByStatus('${key}')" 
+                                    class="text-xs px-3 py-1.5 rounded-full font-medium border border-2 transition-all ${colorMap[val.color]}"
+                                    title="Mostrar apenas ${val.label}">${val.label.split(' ')[0]}</button>`
+                        }).join('')}
+                        <button onclick="filterAppointmentsByStatus('all')" 
+                                class="text-xs px-3 py-1.5 rounded-full font-medium border-2 border-blue-300 bg-white text-blue-700 hover:bg-blue-50 transition-all">Todos</button>
+                    </div>
+                </div>`
+            
+            if (dayAppointments.length === 0) {
+                container.innerHTML = legendaHTML + statusSelectorHTML + `
+                    <div class="bg-violet-50 border-2 border-violet-200 rounded-3xl p-8 text-center">
+                        <i class="fa-solid fa-calendar-xmark text-5xl text-violet-300 mb-4"></i>
+                        <p class="font-semibold text-violet-700 text-lg">Nenhum agendamento</p>
+                        <p class="text-violet-600 text-sm mt-2">Não há pacientes agendados para este dia</p>
+                    </div>`
+                return
+            }
+            
+            // Ordenar por hora
+            dayAppointments.sort((a, b) => a.time.localeCompare(b.time))
+            
+            const typeLabels = {
+                avaliacao: '🔍 Avaliação Inicial',
+                terapia_cognitiva: '🧠 Terapia Cognitiva',
+                reabilitacao_motora: '🦵 Reabilitação Motora',
+                atividade_vida_diaria: '🛁 Atividade de Vida Diária',
+                acompanhamento: '📋 Acompanhamento',
+                reavaliacao: '📊 Reavaliação',
+                outro: '📌 Outro'
+            }
+            
+            const colorMap = {
+                emerald: 'bg-emerald-50 border-emerald-300 text-emerald-700',
+                amber: 'bg-amber-50 border-amber-300 text-amber-700',
+                rose: 'bg-rose-50 border-rose-300 text-rose-700',
+                red: 'bg-red-50 border-red-300 text-red-700',
+                slate: 'bg-slate-50 border-slate-300 text-slate-700',
+                blue: 'bg-blue-50 border-blue-300 text-blue-700'
+            }
+            
+            const appointmentsHTML = dayAppointments.map((appt, idx) => {
+                const status = appointmentStatuses[appt.status] || appointmentStatuses.pendente
+                const statusColor = colorMap[status.color]
+                
+                return `
+                    <div class="bg-white border-2 ${statusColor} rounded-3xl p-6 hover:shadow-lg transition-all">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-lg font-bold text-violet-700">${appt.time}</p>
+                                <p class="text-2xl font-bold text-violet-900">${appt.patientName}</p>
+                            </div>
+                            <span class="text-xs font-semibold px-3 py-1.5 rounded-full border-2 ${statusColor}">${status.label}</span>
+                        </div>
+                        
+                        <div class="mb-4 pb-4 border-b border-violet-200">
+                            <p class="text-violet-700 font-medium">${typeLabels[appt.type] || appt.type}</p>
+                            ${appt.notes ? `<p class="text-sm text-violet-600 mt-2">📝 ${appt.notes}</p>` : ''}
+                        </div>
+
+                        <!-- Selector de Status Compacto -->
+                        <div class="mb-4">
+                            <div class="flex flex-wrap gap-1">
+                                ${Object.entries(appointmentStatuses).map(([key, val]) => {
+                                    const isActive = appt.status === key
+                                    const btnColorMap = {
+                                        emerald: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+                                        amber: 'bg-amber-100 text-amber-700 border-amber-300',
+                                        rose: 'bg-rose-100 text-rose-700 border-rose-300',
+                                        red: 'bg-red-100 text-red-700 border-red-300',
+                                        slate: 'bg-slate-100 text-slate-700 border-slate-300',
+                                        blue: 'bg-blue-100 text-blue-700 border-blue-300'
+                                    }
+                                    const btnColor = btnColorMap[val.color]
+                                    return `<button onclick="updateAppointmentStatus(${appt.id}, '${key}')" 
+                                            class="text-xs px-2 py-1 rounded-lg font-medium transition-all border ${isActive ? `border-2 ${btnColor} shadow-md` : 'border border-gray-300 text-gray-600 hover:border-gray-400'}"
+                                            title="${val.label}">${val.label.split(' ')[0]}</button>`
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="editAppointment(${appt.id})" class="flex-1 bg-violet-100 hover:bg-violet-200 text-violet-700 font-medium py-2 rounded-3xl text-sm">
+                                ✏️ Editar
+                            </button>
+                            <button onclick="deleteAppointment(${appt.id})" class="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-medium py-2 rounded-3xl text-sm">
+                                🗑️ Deletar
+                            </button>
+                            <button onclick="openPatientProntuarioById(${appt.patientId})" class="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-medium py-2 rounded-3xl text-sm">
+                                👁️ Prontuário
+                            </button>
+                        </div>
+                    </div>`
+            }).join('')
+            
+            container.innerHTML = legendaHTML + statusSelectorHTML + appointmentsHTML
+        }
+
+        function filterAppointmentsByStatus(status) {
+            // Função para filtrar agendamentos por status
+            const container = document.getElementById('day-appointments-container')
+            const dayAppointments = appointments.filter(appt => appt.date === selectedAppointmentDate)
+            
+            let filtered = dayAppointments
+            if (status !== 'all') {
+                filtered = dayAppointments.filter(appt => appt.status === status)
+            }
+            
+            if (filtered.length === 0) {
+                const statusLabel = status !== 'all' ? appointmentStatuses[status]?.label : 'nenhum agendamento'
+                container.innerHTML = `
+                    <div class="bg-violet-50 border-2 border-violet-200 rounded-3xl p-8 text-center">
+                        <i class="fa-solid fa-calendar-xmark text-5xl text-violet-300 mb-4"></i>
+                        <p class="font-semibold text-violet-700 text-lg">Nenhum agendamento encontrado</p>
+                        <p class="text-violet-600 text-sm mt-2">Sem pacientes com status: ${statusLabel}</p>
+                        <button onclick="renderDayAppointments()" class="mt-4 bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded-3xl text-sm">Resetar filtro</button>
+                    </div>`
+                return
+            }
+            
+            // Renderizar agendamentos filtrados
+            filtered.sort((a, b) => a.time.localeCompare(b.time))
+            
+            const typeLabels = {
+                avaliacao: '🔍 Avaliação Inicial',
+                terapia_cognitiva: '🧠 Terapia Cognitiva',
+                reabilitacao_motora: '🦵 Reabilitação Motora',
+                atividade_vida_diaria: '🛁 Atividade de Vida Diária',
+                acompanhamento: '📋 Acompanhamento',
+                reavaliacao: '📊 Reavaliação',
+                outro: '📌 Outro'
+            }
+            
+            const colorMap = {
+                emerald: 'bg-emerald-50 border-emerald-300 text-emerald-700',
+                amber: 'bg-amber-50 border-amber-300 text-amber-700',
+                rose: 'bg-rose-50 border-rose-300 text-rose-700',
+                red: 'bg-red-50 border-red-300 text-red-700',
+                slate: 'bg-slate-50 border-slate-300 text-slate-700',
+                blue: 'bg-blue-50 border-blue-300 text-blue-700'
+            }
+            
+            const appointmentsHTML = filtered.map((appt, idx) => {
+                const apptStatus = appointmentStatuses[appt.status] || appointmentStatuses.pendente
+                const statusColor = colorMap[apptStatus.color]
+                
+                return `
+                    <div class="bg-white border-2 ${statusColor} rounded-3xl p-6 hover:shadow-lg transition-all">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-lg font-bold text-violet-700">${appt.time}</p>
+                                <p class="text-2xl font-bold text-violet-900">${appt.patientName}</p>
+                            </div>
+                            <span class="text-xs font-semibold px-3 py-1.5 rounded-full border-2 ${statusColor}">${apptStatus.label}</span>
+                        </div>
+                        
+                        <div class="mb-4 pb-4 border-b border-violet-200">
+                            <p class="text-violet-700 font-medium">${typeLabels[appt.type] || appt.type}</p>
+                            ${appt.notes ? `<p class="text-sm text-violet-600 mt-2">📝 ${appt.notes}</p>` : ''}
+                        </div>
+
+                        <!-- Selector de Status Compacto -->
+                        <div class="mb-4">
+                            <div class="flex flex-wrap gap-1">
+                                ${Object.entries(appointmentStatuses).map(([key, val]) => {
+                                    const isActive = appt.status === key
+                                    const btnColorMap = {
+                                        emerald: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+                                        amber: 'bg-amber-100 text-amber-700 border-amber-300',
+                                        rose: 'bg-rose-100 text-rose-700 border-rose-300',
+                                        red: 'bg-red-100 text-red-700 border-red-300',
+                                        slate: 'bg-slate-100 text-slate-700 border-slate-300',
+                                        blue: 'bg-blue-100 text-blue-700 border-blue-300'
+                                    }
+                                    const btnColor = btnColorMap[val.color]
+                                    return `<button onclick="updateAppointmentStatus(${appt.id}, '${key}')" 
+                                            class="text-xs px-2 py-1 rounded-lg font-medium transition-all border ${isActive ? `border-2 ${btnColor} shadow-md` : 'border border-gray-300 text-gray-600 hover:border-gray-400'}"
+                                            title="${val.label}">${val.label.split(' ')[0]}</button>`
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="editAppointment(${appt.id})" class="flex-1 bg-violet-100 hover:bg-violet-200 text-violet-700 font-medium py-2 rounded-3xl text-sm">
+                                ✏️ Editar
+                            </button>
+                            <button onclick="deleteAppointment(${appt.id})" class="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-medium py-2 rounded-3xl text-sm">
+                                🗑️ Deletar
+                            </button>
+                            <button onclick="openPatientProntuarioById(${appt.patientId})" class="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-medium py-2 rounded-3xl text-sm">
+                                👁️ Prontuário
+                            </button>
+                        </div>
+                    </div>`
+            }).join('')
+            
+            container.innerHTML = appointmentsHTML
+        }
+
+        function changeAppointmentDate(days) {
+            const currentDate = new Date(selectedAppointmentDate)
+            currentDate.setDate(currentDate.getDate() + days)
+            selectedAppointmentDate = currentDate.toISOString().split('T')[0]
+            renderCalendarAndAppointments()
+        }
+
+        function selectAppointmentDate(dateStr) {
+            selectedAppointmentDate = dateStr
+            renderCalendarAndAppointments()
+        }
+
+        function addNewAppointment() {
+            // Limpar modal
+            document.getElementById('appointment-patient').value = ''
+            document.getElementById('appointment-type').value = ''
+            document.getElementById('appointment-date').value = ''
+            document.getElementById('appointment-time').value = ''
+            document.getElementById('appointment-notes').value = ''
+            document.getElementById('new-patient-name').value = ''
+            document.getElementById('new-patient-cpf').value = ''
+            document.getElementById('new-patient-birthdate').value = ''
+            document.getElementById('new-patient-sex').value = ''
+            document.getElementById('new-patient-complaint').value = ''
+            
+            // Atualizar seletor de pacientes
+            updatePatientSelectOptions()
+            
+            // Definir data mínima como hoje
+            const today = new Date().toISOString().split('T')[0]
+            document.getElementById('appointment-date').min = today
+            document.getElementById('appointment-date').value = today
+            
+            // Abrir modal
+            document.getElementById('appointment-modal').classList.remove('hidden')
+        }
+
+        function closeAppointmentModal() {
+            document.getElementById('appointment-modal').classList.add('hidden')
+        }
+
+        function switchAppointmentTab(tab) {
+            if (tab === 'agendar') {
+                document.getElementById('tab-agendar-content').classList.remove('hidden')
+                document.getElementById('tab-cadastrar-content').classList.add('hidden')
+                document.getElementById('tab-agendar').classList.add('text-violet-700', 'border-b-2', 'border-violet-600')
+                document.getElementById('tab-agendar').classList.remove('text-violet-400', 'border-transparent')
+                document.getElementById('tab-cadastrar').classList.remove('text-violet-700', 'border-b-2', 'border-violet-600')
+                document.getElementById('tab-cadastrar').classList.add('text-violet-400', 'border-transparent')
+            } else {
+                document.getElementById('tab-agendar-content').classList.add('hidden')
+                document.getElementById('tab-cadastrar-content').classList.remove('hidden')
+                document.getElementById('tab-cadastrar').classList.add('text-violet-700', 'border-b-2', 'border-violet-600')
+                document.getElementById('tab-cadastrar').classList.remove('text-violet-400', 'border-transparent')
+                document.getElementById('tab-agendar').classList.remove('text-violet-700', 'border-b-2', 'border-violet-600')
+                document.getElementById('tab-agendar').classList.add('text-violet-400', 'border-transparent')
+            }
+        }
+
+        function updatePatientSelectOptions() {
+            const select = document.getElementById('appointment-patient')
+            select.innerHTML = '<option value="">-- Escolha um paciente --</option>' +
+                patients.map(p => `<option value="${p.id}">${p.nome} • ${p.idade} anos</option>`).join('')
+        }
+
+        function saveNewAppointment() {
+            const patientId = document.getElementById('appointment-patient').value
+            const type = document.getElementById('appointment-type').value
+            const date = document.getElementById('appointment-date').value
+            const time = document.getElementById('appointment-time').value
+            const notes = document.getElementById('appointment-notes').value
+
+            if (!patientId || !type || !date || !time) {
+                alert('⚠️ Por favor, preencha todos os campos obrigatórios!')
+                return
+            }
+
+            const patient = patients.find(p => p.id == patientId)
+            const appointment = {
+                id: getNextAppointmentId(),
+                patientId: parseInt(patientId),
+                patientName: patient.nome,
+                type: type,
+                date: date,
+                time: time,
+                status: 'pendente',
+                notes: notes
+            }
+
+            appointments.push(appointment)
+            saveAppointments()
+            closeAppointmentModal()
+            renderAgendamentos()
+            alert('✅ Agendamento criado com sucesso!')
+        }
+
+        function createNewPatientAndSchedule() {
+            const name = document.getElementById('new-patient-name').value
+            const cpf = document.getElementById('new-patient-cpf').value
+            const birthdate = document.getElementById('new-patient-birthdate').value
+            const sex = document.getElementById('new-patient-sex').value
+            const complaint = document.getElementById('new-patient-complaint').value
+
+            if (!name) {
+                alert('⚠️ Nome do paciente é obrigatório!')
+                return
+            }
+
+            // Calcular idade
+            let age = new Date().getFullYear()
+            if (birthdate) {
+                const birthYear = new Date(birthdate).getFullYear()
+                age = new Date().getFullYear() - birthYear
+            }
+
+            const newPatient = {
+                id: patients.length > 0 ? Math.max(...patients.map(p => p.id)) + 1 : 1,
+                nome: name,
+                cpf: cpf || '',
+                dataNascimento: birthdate || '',
+                idade: age,
+                sexo: sex || 'Não informado',
+                estadoCivil: 'Não informado',
+                naturalidade: 'Não informado',
+                escolaridade: 'Não informado',
+                religiosidade: 'Não informado',
+                queixaPrincipal: complaint || '',
+                historiaSaude: '',
+                doencasCronicas: [],
+                avaliacao_avd: '',
+                avaliacao_aivd: '',
+                gestao_saude: '',
+                descanso_sono: '',
+                educacao: '',
+                trabalho: '',
+                lazer: '',
+                participacao_social: '',
+                habilidades_motoras: {},
+                habilidades_processuais: {},
+                funcoes_sensoriais: {},
+                habilidades_interacao_social: {},
+                papeis_ocupacionais: {},
+                rotina_diaria: {},
+                observacoes_complementares: '',
+                plano_terapeutico: {},
+                fotoBase64: null,
+                prontuario: {
+                    anamnese: {},
+                    katz: {},
+                    gds: {},
+                    pfeffer: {},
+                    miniMental: {},
+                    evolucoes: [],
+                    prescricao: {}
+                }
+            }
+
+            patients.push(newPatient)
+            savePatients()
+
+            // Voltar para aba agendar e selecionar novo paciente
+            switchAppointmentTab('agendar')
+            updatePatientSelectOptions()
+            document.getElementById('appointment-patient').value = newPatient.id
+            
+            alert('✅ Paciente cadastrado com sucesso! Agora complete os dados do agendamento.')
+        }
+
+        function editAppointment(id) {
+            const appointment = appointments.find(a => a.id === id)
+            if (!appointment) return
+
+            document.getElementById('appointment-patient').value = appointment.patientId
+            document.getElementById('appointment-type').value = appointment.type
+            document.getElementById('appointment-date').value = appointment.date
+            document.getElementById('appointment-time').value = appointment.time
+            document.getElementById('appointment-notes').value = appointment.notes
+
+            // Adicionar função de salvar edição
+            const oldButtonHTML = document.querySelector('button[onclick="saveNewAppointment()"]').outerHTML
+            document.querySelector('button[onclick="saveNewAppointment()"]').outerHTML = 
+                `<button onclick="saveEditedAppointment(${id})" class="flex-1 py-4 bg-violet-600 text-white font-semibold rounded-3xl hover:bg-violet-700">Salvar Alterações</button>`
+            
+            switchAppointmentTab('agendar')
+            document.getElementById('appointment-modal').classList.remove('hidden')
+        }
+
+        function saveEditedAppointment(id) {
+            const type = document.getElementById('appointment-type').value
+            const date = document.getElementById('appointment-date').value
+            const time = document.getElementById('appointment-time').value
+            const notes = document.getElementById('appointment-notes').value
+
+            if (!type || !date || !time) {
+                alert('⚠️ Por favor, preencha todos os campos obrigatórios!')
+                return
+            }
+
+            const appointment = appointments.find(a => a.id === id)
+            if (appointment) {
+                appointment.type = type
+                appointment.date = date
+                appointment.time = time
+                appointment.notes = notes
+                saveAppointments()
+                closeAppointmentModal()
+                renderAgendamentos()
+                alert('✅ Agendamento atualizado com sucesso!')
+            }
+
+            // Restaurar botão original
+            const button = document.querySelector('button[onclick*="saveEdited"]')
+            if (button) {
+                button.outerHTML = `<button onclick="saveNewAppointment()" class="flex-1 py-4 bg-violet-600 text-white font-semibold rounded-3xl hover:bg-violet-700">Agendar</button>`
+            }
+        }
+
+        function updateAppointmentStatus(id, newStatus) {
+            const appointment = appointments.find(a => a.id === id)
+            if (appointment) {
+                appointment.status = newStatus
+                saveAppointments()
+                renderDayAppointments()
+                
+                const statusLabel = appointmentStatuses[newStatus]?.label || 'Status atualizado'
+                alert(`✅ Status atualizado para: ${statusLabel}`)
+            }
+        }
+
+        function deleteAppointment(id) {
+            if (confirm('Tem certeza que deseja deletar este agendamento?')) {
+                appointments = appointments.filter(a => a.id !== id)
+                saveAppointments()
+                renderAgendamentos()
+                alert('✅ Agendamento deletado com sucesso!')
+            }
+        }
+
+        function quickOpenProntuario() {
+            openPatientProntuarioById(1)
+        }
+
+        function logoutDemo() {
+            if (confirm('Deseja sair do PRONTTO?')) {
+                localStorage.clear()
+                location.reload()
+            }
+        }
+
+        // ==================== INICIALIZAÇÃO ====================
+        function initTailwind() {
+            tailwind.config = {
+                content: [],
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+
+        function exportToWord() {
+            const patient = patients.find(p => p.id === currentPatientId)
+            if (!patient) {
+                alert('Paciente não selecionado')
+                return
+            }
+
+            alert('📄 Abrindo documento...\n\nPara salvar como Word:\n1. Clique em "Arquivo"\n2. Selecione "Salvar como"\n3. Escolha formato .docx\n\nSugestão: Prontuario_' + patient.nome.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0])
+            printDocument('completo')
+        }
+
+        window.onload = function() {
+            initTailwind()
+            loadDemoData()
+            loadAppointments()
+            renderMainContent()
+            
+            console.log('%c🚀 PRONTTO iniciado com sucesso! Sistema de Terapia Ocupacional completo.', 'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px')
+            console.log('✅ Estruturas extraídas dos PDFs: Katz, GDS-15, Pfeffer, Mini-Mental e Anamnese')
+            console.log('📱 Totalmente responsivo e profissional')
+        }
+    </script>
+</body>
+</html>
